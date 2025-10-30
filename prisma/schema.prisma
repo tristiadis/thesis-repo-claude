@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum ThesisStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STUDENT)
+  nim       String?  @unique // Student ID number (for students only)
+  phone     String?
+  address   String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  theses    Thesis[]
+
+  @@map("users")
+}
+
+model Thesis {
+  id          Int           @id @default(autoincrement())
+  title       String
+  abstract    String        @db.Text
+  keywords    String
+  year        Int
+  author      String
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  status      ThesisStatus  @default(PENDING)
+  rejectionReason String?   @db.Text
+  downloadCount Int        @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("theses")
+  @@index([userId])
+  @@index([status])
+  @@index([year])
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+
+  @@map("session")
+}
