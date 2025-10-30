@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireStudent } = require('../middleware/auth');
+const { requireStudent } = require('../middleware/role');
 
 /**
  * GET /student/dashboard

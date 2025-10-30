@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('../config/passport');
-const { isGuest } = require('../middleware/auth');
+const { isGuest } = require('../middleware/role');
 
 /**
  * GET /auth/login
