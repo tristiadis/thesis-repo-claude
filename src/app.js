@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const passport = require('passport');
+const passport = require('./config/passport');
 const path = require('path');
 
 const app = express();
@@ -22,7 +22,7 @@ const sessionConfig = {
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000, // 24 hours
+    maxAge: 2 * 60 * 60 * 1000, // 2 hours (7200000 ms)
   },
 };
 
@@ -48,43 +48,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes will be added here
-// Example:
-// const authRoutes = require('./routes/auth.routes');
-// const adminRoutes = require('./routes/admin.routes');
-// const studentRoutes = require('./routes/student.routes');
+// Routes
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const studentRoutes = require('./routes/student');
 
-// app.use('/auth', authRoutes);
-// app.use('/admin', adminRoutes);
-// app.use('/student', studentRoutes);
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/student', studentRoutes);
 
-// Home route (temporary)
+// Home route - Redirect to login
 app.get('/', (req, res) => {
-  res.send(`
-    <html>
-      <head>
-        <title>${process.env.APP_NAME || 'Thesis Repository System'}</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            text-align: center;
-          }
-          h1 { color: #333; }
-          .status { color: #28a745; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <h1>🎓 ${process.env.APP_NAME || 'Thesis Repository System'}</h1>
-        <p class="status">✓ Server is running successfully!</p>
-        <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
-        <hr>
-        <p><small>Configure your routes in src/app.js to get started</small></p>
-      </body>
-    </html>
-  `);
+  if (req.isAuthenticated()) {
+    // Redirect authenticated users to their dashboard
+    const redirectPath =
+      req.user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard';
+    return res.redirect(redirectPath);
+  }
+  res.redirect('/auth/login');
 });
 
 // 404 handler
