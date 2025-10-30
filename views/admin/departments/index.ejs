@@ -1,0 +1,379 @@
+<!-- Department Management Page -->
+<div class="space-y-6" x-data="departmentManager()">
+
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        <i class="fas fa-sitemap text-indigo-600 mr-3"></i>Manage Departments
+      </h1>
+      <p class="text-gray-600 mt-1">Manage departments within faculties</p>
+    </div>
+    <a href="/admin/departments/create" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-md hover:shadow-lg">
+      <i class="fas fa-plus mr-2"></i>Add New Department
+    </a>
+  </div>
+
+  <!-- Search -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center space-x-4">
+      <div class="flex-1">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input
+            type="text"
+            x-model="searchQuery"
+            placeholder="Search departments by name or code..."
+            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 text-sm text-gray-600">
+        <span>Total:</span>
+        <span class="font-bold text-indigo-600" x-text="totalDepartments"></span>
+        <span>departments</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Faculties Accordion -->
+  <% if (faculties && faculties.length > 0) { %>
+    <div class="space-y-4">
+      <% faculties.forEach((faculty, facultyIndex) => { %>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden" x-data="{ open: <%= facultyIndex === 0 ? 'true' : 'false' %> }">
+
+          <!-- Faculty Header (Accordion Trigger) -->
+          <div
+            @click="open = !open"
+            class="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition"
+          >
+            <div class="flex items-center flex-1">
+              <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                <i class="fas fa-building text-white text-xl"></i>
+              </div>
+              <div class="ml-4 flex-1">
+                <h2 class="text-xl font-bold text-gray-900"><%= faculty.name %></h2>
+                <p class="text-sm text-gray-500 mt-1">
+                  <% if (faculty.nameEn) { %><%= faculty.nameEn %> • <% } %>
+                  <%= faculty.departments.length %> department<%= faculty.departments.length !== 1 ? 's' : '' %>
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <% if (faculty.code) { %>
+                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-md text-sm font-medium">
+                  <%= faculty.code %>
+                </span>
+              <% } %>
+              <div class="text-gray-400 transition-transform" :class="{ 'transform rotate-180': open }">
+                <i class="fas fa-chevron-down text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Departments Table (Accordion Content) -->
+          <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-2"
+            class="border-t border-gray-200"
+          >
+            <% if (faculty.departments.length > 0) { %>
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Department Name
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Name (EN)
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Code
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Theses
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Lecturers
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <% faculty.departments.forEach(department => { %>
+                      <tr class="hover:bg-gray-50 transition department-row" data-name="<%= department.name.toLowerCase() %>" data-code="<%= department.code ? department.code.toLowerCase() : '' %>">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="flex items-center">
+                            <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                              <i class="fas fa-sitemap text-indigo-600"></i>
+                            </div>
+                            <div class="ml-4">
+                              <div class="text-sm font-medium text-gray-900"><%= department.name %></div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="text-sm text-gray-500"><%= department.nameEn || '-' %></div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <% if (department.code) { %>
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded bg-gray-100 text-gray-800">
+                              <%= department.code %>
+                            </span>
+                          <% } else { %>
+                            <span class="text-gray-400">-</span>
+                          <% } %>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                          <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <%= department._count.theses > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' %>">
+                            <i class="fas fa-file-alt mr-1"></i>
+                            <%= department._count.theses %>
+                          </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                          <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <%= department._count.lecturers > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600' %>">
+                            <i class="fas fa-chalkboard-teacher mr-1"></i>
+                            <%= department._count.lecturers %>
+                          </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                          <a href="/admin/departments/<%= department.id %>/edit" class="inline-flex items-center px-3 py-1 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 transition">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                          </a>
+                          <button
+                            @click="confirmDelete({
+                              id: <%= department.id %>,
+                              name: '<%= department.name %>',
+                              thesesCount: <%= department._count.theses %>,
+                              lecturersCount: <%= department._count.lecturers %>
+                            })"
+                            class="inline-flex items-center px-3 py-1 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition">
+                            <i class="fas fa-trash mr-1"></i>Delete
+                          </button>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+            <% } else { %>
+              <div class="text-center py-12">
+                <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
+                <p class="text-gray-500">No departments in this faculty yet</p>
+              </div>
+            <% } %>
+          </div>
+
+        </div>
+      <% }); %>
+    </div>
+  <% } else { %>
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl shadow-sm text-center py-16">
+      <i class="fas fa-sitemap text-gray-300 text-6xl mb-4"></i>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No Departments Yet</h3>
+      <p class="text-gray-500 mb-6">Get started by creating your first department</p>
+      <a href="/admin/departments/create" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
+        <i class="fas fa-plus mr-2"></i>Add First Department
+      </a>
+    </div>
+  <% } %>
+
+  <!-- Delete Confirmation Modal -->
+  <div
+    x-show="showDeleteModal"
+    x-cloak
+    class="fixed inset-0 z-50 overflow-y-auto"
+    aria-labelledby="modal-title"
+    role="dialog"
+    aria-modal="true"
+    style="display: none;"
+  >
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+
+      <!-- Background overlay -->
+      <div
+        x-show="showDeleteModal"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        aria-hidden="true"
+        @click="showDeleteModal = false"
+      ></div>
+
+      <!-- Center modal -->
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+      <!-- Modal panel -->
+      <div
+        x-show="showDeleteModal"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                Delete Department
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  Are you sure you want to delete department <strong x-text="departmentToDelete?.name"></strong>?
+                  This action cannot be undone.
+                </p>
+                <template x-if="departmentToDelete && (departmentToDelete.thesesCount > 0 || departmentToDelete.lecturersCount > 0)">
+                  <div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                    <div class="flex">
+                      <i class="fas fa-exclamation-circle text-yellow-400 mt-0.5 mr-2"></i>
+                      <div class="text-sm text-yellow-700">
+                        <template x-if="departmentToDelete.thesesCount > 0">
+                          <p>This department has <strong x-text="departmentToDelete.thesesCount"></strong> thesis/theses.</p>
+                        </template>
+                        <template x-if="departmentToDelete.lecturersCount > 0">
+                          <p>This department has <strong x-text="departmentToDelete.lecturersCount"></strong> lecturer(s).</p>
+                        </template>
+                        <p class="mt-1 font-medium">Deletion may fail.</p>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button
+            type="button"
+            @click="deleteDepartment()"
+            :disabled="isDeleting"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span x-show="!isDeleting">
+              <i class="fas fa-trash mr-2"></i>Delete
+            </span>
+            <span x-show="isDeleting" class="flex items-center">
+              <i class="fas fa-spinner fa-spin mr-2"></i>Deleting...
+            </span>
+          </button>
+          <button
+            type="button"
+            @click="showDeleteModal = false"
+            :disabled="isDeleting"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Alpine.js Component -->
+<script>
+  function departmentManager() {
+    return {
+      searchQuery: '',
+      showDeleteModal: false,
+      departmentToDelete: null,
+      isDeleting: false,
+
+      get totalDepartments() {
+        return document.querySelectorAll('.department-row').length;
+      },
+
+      init() {
+        // Watch for search query changes
+        this.$watch('searchQuery', (value) => {
+          this.filterDepartments(value);
+        });
+      },
+
+      filterDepartments(query) {
+        const rows = document.querySelectorAll('.department-row');
+        const lowerQuery = query.toLowerCase().trim();
+
+        if (!lowerQuery) {
+          // Show all rows
+          rows.forEach(row => {
+            row.style.display = '';
+          });
+          return;
+        }
+
+        // Filter rows
+        rows.forEach(row => {
+          const name = row.getAttribute('data-name') || '';
+          const code = row.getAttribute('data-code') || '';
+
+          if (name.includes(lowerQuery) || code.includes(lowerQuery)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      },
+
+      confirmDelete(department) {
+        this.departmentToDelete = department;
+        this.showDeleteModal = true;
+      },
+
+      async deleteDepartment() {
+        if (!this.departmentToDelete) return;
+
+        this.isDeleting = true;
+
+        try {
+          const response = await fetch(`/admin/departments/${this.departmentToDelete.id}/delete`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            // Redirect to reload page with flash message
+            window.location.href = '/admin/departments';
+          } else {
+            alert('Failed to delete department. Please try again.');
+            this.isDeleting = false;
+          }
+        } catch (error) {
+          console.error('Error deleting department:', error);
+          alert('An error occurred while deleting the department.');
+          this.isDeleting = false;
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  [x-cloak] {
+    display: none !important;
+  }
+</style>

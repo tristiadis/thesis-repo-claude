@@ -3,6 +3,7 @@ const router = express.Router();
 const { requireAdmin } = require('../middleware/role');
 const adminController = require('../controllers/adminController');
 const facultyController = require('../controllers/facultyController');
+const departmentController = require('../controllers/departmentController');
 
 /**
  * GET /admin/dashboard
@@ -30,5 +31,26 @@ router.post('/faculties/:id/update', requireAdmin, facultyController.update);
 
 // Delete faculty
 router.post('/faculties/:id/delete', requireAdmin, facultyController.destroy);
+
+/**
+ * Department Routes
+ */
+// List all departments
+router.get('/departments', requireAdmin, departmentController.index);
+
+// Show create form
+router.get('/departments/create', requireAdmin, departmentController.create);
+
+// Store new department
+router.post('/departments', requireAdmin, departmentController.store);
+
+// Show edit form
+router.get('/departments/:id/edit', requireAdmin, departmentController.edit);
+
+// Update department
+router.post('/departments/:id/update', requireAdmin, departmentController.update);
+
+// Delete department
+router.post('/departments/:id/delete', requireAdmin, departmentController.destroy);
 
 module.exports = router;
