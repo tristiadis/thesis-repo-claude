@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Thesis Repository System - Database Schema
+// Built with Prisma ORM for PostgreSQL
+// Version: 1.0.0
 
 generator client {
   provider = "prisma-client-js"
@@ -10,68 +11,311 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================================
+// ENUMS
+// ============================================================================
+
 enum Role {
   ADMIN
   STUDENT
 }
 
 enum ThesisStatus {
-  PENDING
-  APPROVED
-  REJECTED
+  DRAFT      // Initial draft state
+  PENDING    // Submitted for review
+  APPROVED   // Approved and published
+  REJECTED   // Rejected by reviewer
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(STUDENT)
-  nim       String?  @unique // Student ID number (for students only)
-  phone     String?
-  address   String?
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum FileType {
+  COVER
+  CHAPTER_1
+  CHAPTER_2
+  CHAPTER_3
+  CHAPTER_4
+  CHAPTER_5
+  BIBLIOGRAPHY
+  APPENDIX
+  OTHER
+}
+
+enum AccessLevel {
+  PUBLIC      // Publicly accessible
+  EMBARGOED   // Temporarily restricted
+  RESTRICTED  // Permanently restricted
+}
+
+enum EventType {
+  VIEW            // Thesis page view
+  DOWNLOAD        // File download
+  METADATA_EXPORT // Export metadata (BibTeX, RIS, etc)
+}
+
+enum SettingType {
+  STRING
+  INTEGER
+  BOOLEAN
+  JSON
+}
+
+// ============================================================================
+// MODELS - ORGANIZATIONAL STRUCTURE
+// ============================================================================
+
+/// Faculty (Fakultas)
+/// Top-level organizational unit in the university
+model Faculty {
+  id          Int      @id @default(autoincrement())
+  name        String   // Indonesian name
+  nameEn      String?  // English name
+  code        String   @unique @db.VarChar(10)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
+  departments Department[]
+
+  @@map("faculties")
+  @@index([code])
+  @@index([isActive])
+}
+
+/// Department (Program Studi / Jurusan)
+/// Academic department within a faculty
+model Department {
+  id         Int      @id @default(autoincrement())
+  facultyId  Int
+  name       String   // Indonesian name
+  nameEn     String?  // English name
+  code       String   @unique @db.VarChar(10)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  faculty   Faculty    @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  lecturers Lecturer[]
   theses    Thesis[]
 
-  @@map("users")
+  @@map("departments")
+  @@index([facultyId])
+  @@index([code])
+  @@index([isActive])
 }
 
-model Thesis {
-  id          Int           @id @default(autoincrement())
-  title       String
-  abstract    String        @db.Text
-  keywords    String
-  year        Int
-  author      String
-  fileName    String
-  filePath    String
-  fileSize    Int
-  mimeType    String
-  status      ThesisStatus  @default(PENDING)
-  rejectionReason String?   @db.Text
-  downloadCount Int        @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+/// Lecturer (Dosen)
+/// Faculty members who can be advisors or examiners
+model Lecturer {
+  id           Int      @id @default(autoincrement())
+  nidn         String   @unique @db.VarChar(20) // National Lecturer ID Number
+  name         String   // Format: "Last, First" (RIS standard)
+  email        String?  @unique
+  departmentId Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  userId      Int
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department        Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  thesesAsAdvisor1  Thesis[]   @relation("ThesisAdvisor1")
+  thesesAsAdvisor2  Thesis[]   @relation("ThesisAdvisor2")
+  thesesAsExaminer1 Thesis[]   @relation("ThesisExaminer1")
+  thesesAsExaminer2 Thesis[]   @relation("ThesisExaminer2")
+  thesesAsExaminer3 Thesis[]   @relation("ThesisExaminer3")
 
-  @@map("theses")
-  @@index([userId])
-  @@index([status])
-  @@index([year])
+  @@map("lecturers")
+  @@index([departmentId])
+  @@index([nidn])
+  @@index([email])
+  @@index([isActive])
 }
 
+// ============================================================================
+// MODELS - USER MANAGEMENT
+// ============================================================================
+
+/// User (System Users)
+/// Accounts for system access (Admin and Students)
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique @db.VarChar(50)
+  password  String    // Hashed password
+  role      Role      @default(STUDENT)
+  name      String
+  email     String?   @unique
+  isActive  Boolean   @default(true)
+  lastLogin DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  submittedTheses Thesis[] @relation("ThesisSubmitter")
+  reviewedTheses  Thesis[] @relation("ThesisReviewer")
+
+  @@map("users")
+  @@index([username])
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+}
+
+// ============================================================================
+// MODELS - THESIS MANAGEMENT
+// ============================================================================
+
+/// Thesis (Skripsi / Tugas Akhir)
+/// Main thesis document with metadata
+model Thesis {
+  id             Int           @id @default(autoincrement())
+  departmentId   Int
+  submitterId    Int
+  status         ThesisStatus  @default(DRAFT)
+  submittedAt    DateTime?     // When submitted for review
+  reviewedAt     DateTime?     // When review completed
+  reviewedBy     Int?          // Admin who reviewed
+  reviewerNotes  String?       @db.Text
+
+  // Thesis Metadata
+  title          String        @db.VarChar(500)
+  titleEn        String?       @db.VarChar(500)
+  authorName     String        // Student's full name
+  studentId      String        @db.VarChar(50) // NIM/Student ID
+  graduationYear Int
+  defenseDate    DateTime?     // Tanggal sidang
+  abstractId     String        @db.Text
+  abstractEn     String?       @db.Text
+  keywords       String        @db.VarChar(500) // Comma-separated
+  keywordsEn     String?       @db.VarChar(500) // Comma-separated
+
+  // Advisors and Examiners
+  advisor1Id     Int
+  advisor2Id     Int?
+  examiner1Id    Int
+  examiner2Id    Int?
+  examiner3Id    Int?
+
+  // Statistics
+  viewCount      Int           @default(0)
+  downloadCount  Int           @default(0)
+  publishedAt    DateTime?     // When approved and made public
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  department     Department    @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  submitter      User          @relation("ThesisSubmitter", fields: [submitterId], references: [id], onDelete: Restrict)
+  reviewer       User?         @relation("ThesisReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  advisor1       Lecturer      @relation("ThesisAdvisor1", fields: [advisor1Id], references: [id], onDelete: Restrict)
+  advisor2       Lecturer?     @relation("ThesisAdvisor2", fields: [advisor2Id], references: [id], onDelete: Restrict)
+  examiner1      Lecturer      @relation("ThesisExaminer1", fields: [examiner1Id], references: [id], onDelete: Restrict)
+  examiner2      Lecturer?     @relation("ThesisExaminer2", fields: [examiner2Id], references: [id], onDelete: Restrict)
+  examiner3      Lecturer?     @relation("ThesisExaminer3", fields: [examiner3Id], references: [id], onDelete: Restrict)
+  files          ThesisFile[]
+  statisticsLogs StatisticsLog[]
+
+  @@map("theses")
+  @@index([departmentId])
+  @@index([submitterId])
+  @@index([reviewedBy])
+  @@index([status])
+  @@index([graduationYear])
+  @@index([publishedAt])
+  @@index([advisor1Id])
+  @@index([examiner1Id])
+}
+
+/// Thesis File (File-file Skripsi)
+/// Individual file components of a thesis
+model ThesisFile {
+  id               Int         @id @default(autoincrement())
+  thesisId         Int
+  fileType         FileType
+  filename         String      // Stored filename
+  originalFilename String      // Original upload filename
+  filePath         String      // Relative path from upload root
+  fileSize         Int         // Size in bytes
+  mimeType         String      @db.VarChar(100)
+  checksum         String?     @db.VarChar(64) // SHA-256 hash
+
+  // Access Control
+  accessLevel      AccessLevel @default(PUBLIC)
+  embargoUntil     DateTime?   // Embargo expiry date
+  embargoReason    String?     @db.Text
+
+  // Statistics
+  downloadCount    Int         @default(0)
+  sequenceOrder    Int         @default(0) // For ordering files
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // Relations
+  thesis           Thesis      @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  statisticsLogs   StatisticsLog[]
+
+  @@map("thesis_files")
+  @@index([thesisId])
+  @@index([fileType])
+  @@index([accessLevel])
+  @@index([embargoUntil])
+}
+
+// ============================================================================
+// MODELS - STATISTICS & LOGGING
+// ============================================================================
+
+/// Statistics Log (Log Statistik)
+/// Tracks views, downloads, and exports
+model StatisticsLog {
+  id         Int       @id @default(autoincrement())
+  thesisId   Int
+  fileId     Int?      // Null for VIEW and METADATA_EXPORT events
+  eventType  EventType
+  ipHash     String?   @db.VarChar(64) // SHA-256 hash of IP for privacy
+  userAgent  String?   @db.Text
+  referer    String?   @db.Text
+  createdAt  DateTime  @default(now())
+
+  // Relations
+  thesis     Thesis     @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  file       ThesisFile? @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@map("statistics_logs")
+  @@index([thesisId])
+  @@index([fileId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// MODELS - SYSTEM CONFIGURATION
+// ============================================================================
+
+/// System Settings (Pengaturan Sistem)
+/// Key-value store for system configuration
+model SystemSetting {
+  id           Int         @id @default(autoincrement())
+  settingKey   String      @unique @db.VarChar(100)
+  settingValue String      @db.Text
+  settingType  SettingType @default(STRING)
+  description  String?     @db.Text
+  updatedAt    DateTime    @updatedAt
+
+  @@map("system_settings")
+  @@index([settingKey])
+}
+
+/// Session (User Sessions)
+/// For express-session PostgreSQL store
 model Session {
   id        String   @id
   sid       String   @unique
-  data      String
+  data      String   @db.Text
   expiresAt DateTime
 
   @@map("session")
+  @@index([expiresAt])
 }
