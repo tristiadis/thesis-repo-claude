@@ -4,6 +4,7 @@ const { requireAdmin } = require('../middleware/role');
 const adminController = require('../controllers/adminController');
 const facultyController = require('../controllers/facultyController');
 const departmentController = require('../controllers/departmentController');
+const lecturerController = require('../controllers/lecturerController');
 
 /**
  * GET /admin/dashboard
@@ -52,5 +53,26 @@ router.post('/departments/:id/update', requireAdmin, departmentController.update
 
 // Delete department
 router.post('/departments/:id/delete', requireAdmin, departmentController.destroy);
+
+/**
+ * Lecturer Routes
+ */
+// List all lecturers
+router.get('/lecturers', requireAdmin, lecturerController.index);
+
+// Show create form
+router.get('/lecturers/create', requireAdmin, lecturerController.create);
+
+// Store new lecturer
+router.post('/lecturers', requireAdmin, lecturerController.store);
+
+// Show edit form
+router.get('/lecturers/:id/edit', requireAdmin, lecturerController.edit);
+
+// Update lecturer
+router.post('/lecturers/:id/update', requireAdmin, lecturerController.update);
+
+// Delete lecturer
+router.post('/lecturers/:id/delete', requireAdmin, lecturerController.destroy);
 
 module.exports = router;

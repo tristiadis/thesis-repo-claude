@@ -1,0 +1,376 @@
+<!-- Lecturer Form (Create/Edit) -->
+<div class="max-w-4xl mx-auto space-y-6" x-data="lecturerForm()">
+
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        <i class="fas fa-chalkboard-teacher text-teal-600 mr-3"></i><%= pageTitle %>
+      </h1>
+      <p class="text-gray-600 mt-1">
+        <%= lecturer ? 'Update lecturer information' : 'Add a new lecturer to the system' %>
+      </p>
+    </div>
+    <a href="/admin/lecturers" class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+      <i class="fas fa-arrow-left mr-2"></i>Back to List
+    </a>
+  </div>
+
+  <!-- RIS Format Warning -->
+  <div class="bg-gradient-to-r from-teal-50 to-cyan-50 border-l-4 border-teal-500 rounded-lg p-6">
+    <div class="flex items-start">
+      <div class="flex-shrink-0">
+        <i class="fas fa-exclamation-circle text-teal-600 text-2xl"></i>
+      </div>
+      <div class="ml-4 flex-1">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">
+          <i class="fas fa-user-tie mr-2"></i>Important: RIS Name Format Required
+        </h3>
+        <p class="text-sm text-gray-700 mb-3">
+          Lecturer names must follow the <strong>RIS (Reference Information Service)</strong> format for proper academic citation.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white rounded-lg p-4 border border-green-300">
+            <div class="flex items-center mb-2">
+              <i class="fas fa-check-circle text-green-500 text-lg mr-2"></i>
+              <span class="font-semibold text-green-700">Correct Format:</span>
+            </div>
+            <p class="text-sm text-gray-700 mb-2"><strong>Last, First</strong> (comma required)</p>
+            <div class="space-y-1 text-sm text-gray-600">
+              <div><i class="fas fa-check text-green-500 mr-1"></i> Santoso, Budi</div>
+              <div><i class="fas fa-check text-green-500 mr-1"></i> Wijaya, Ahmad Hidayat</div>
+              <div><i class="fas fa-check text-green-500 mr-1"></i> van der Berg, Maria</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg p-4 border border-red-300">
+            <div class="flex items-center mb-2">
+              <i class="fas fa-times-circle text-red-500 text-lg mr-2"></i>
+              <span class="font-semibold text-red-700">Incorrect Format:</span>
+            </div>
+            <p class="text-sm text-gray-700 mb-2">Missing comma or wrong order</p>
+            <div class="space-y-1 text-sm text-gray-600">
+              <div><i class="fas fa-times text-red-500 mr-1"></i> Budi Santoso (no comma)</div>
+              <div><i class="fas fa-times text-red-500 mr-1"></i> Santoso (incomplete)</div>
+              <div><i class="fas fa-times text-red-500 mr-1"></i> Santoso Budi (reversed)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-white rounded-xl shadow-sm p-8">
+    <form
+      id="lecturerForm"
+      action="<%= action %>"
+      method="POST"
+      @submit="handleSubmit"
+      novalidate
+    >
+
+      <!-- NIDN - Optional -->
+      <div class="mb-6">
+        <label for="nidn" class="block text-sm font-semibold text-gray-700 mb-2">
+          NIDN (National Lecturer ID Number)
+        </label>
+        <input
+          type="text"
+          id="nidn"
+          name="nidn"
+          x-model="form.nidn"
+          placeholder="e.g., 0012345678"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          :class="{'border-red-500': errors.nidn}"
+        >
+        <p x-show="errors.nidn" x-text="errors.nidn" class="mt-2 text-sm text-red-600"></p>
+        <p class="mt-2 text-sm text-gray-500">
+          <i class="fas fa-info-circle mr-1"></i>Optional: 10-digit national lecturer identification number
+        </p>
+      </div>
+
+      <!-- Name - Required with RIS Format Validation -->
+      <div class="mb-6">
+        <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+          Lecturer Name (RIS Format) <span class="text-red-500">*</span>
+        </label>
+        <div class="relative">
+          <input
+            type="text"
+            id="name"
+            name="name"
+            x-model="form.name"
+            @input="validateNameFormat"
+            required
+            placeholder="Last, First (e.g., Santoso, Budi)"
+            class="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            :class="{
+              'border-red-500': errors.name || (form.name && !isNameFormatValid),
+              'border-green-500': form.name && isNameFormatValid,
+              'border-gray-300': !form.name
+            }"
+          >
+          <!-- Format Indicator -->
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+            <template x-if="form.name && isNameFormatValid">
+              <i class="fas fa-check-circle text-green-500 text-xl"></i>
+            </template>
+            <template x-if="form.name && !isNameFormatValid">
+              <i class="fas fa-times-circle text-red-500 text-xl"></i>
+            </template>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <p x-show="errors.name" x-text="errors.name" class="mt-2 text-sm text-red-600"></p>
+
+        <!-- Format Validation Feedback -->
+        <div x-show="form.name && !isNameFormatValid" class="mt-2 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+          <div class="flex items-start">
+            <i class="fas fa-exclamation-triangle text-red-500 mr-2 mt-0.5"></i>
+            <div class="text-sm text-red-700">
+              <p class="font-medium">Invalid RIS format!</p>
+              <p class="mt-1">Name must be in format: <strong>Last, First</strong></p>
+              <p class="mt-1 text-xs">Example: Santoso, Budi (not Budi Santoso)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Feedback -->
+        <div x-show="form.name && isNameFormatValid" class="mt-2 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+          <div class="flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+            <p class="text-sm text-green-700 font-medium">
+              <i class="fas fa-thumbs-up mr-1"></i>Valid RIS format!
+            </p>
+          </div>
+        </div>
+
+        <p class="mt-2 text-sm text-gray-500">
+          <i class="fas fa-info-circle mr-1"></i>Format: Last, First (comma is required)
+        </p>
+      </div>
+
+      <!-- Email - Optional -->
+      <div class="mb-6">
+        <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+          Email Address
+        </label>
+        <div class="relative">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            x-model="form.email"
+            @input="validateEmailFormat"
+            placeholder="e.g., lecturer@example.com"
+            class="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            :class="{
+              'border-red-500': errors.email || (form.email && !isEmailFormatValid),
+              'border-green-500': form.email && isEmailFormatValid,
+              'border-gray-300': !form.email
+            }"
+          >
+          <!-- Email Indicator -->
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+            <template x-if="form.email && isEmailFormatValid">
+              <i class="fas fa-check-circle text-green-500 text-xl"></i>
+            </template>
+            <template x-if="form.email && !isEmailFormatValid">
+              <i class="fas fa-times-circle text-red-500 text-xl"></i>
+            </template>
+          </div>
+        </div>
+        <p x-show="errors.email" x-text="errors.email" class="mt-2 text-sm text-red-600"></p>
+        <p x-show="form.email && !isEmailFormatValid" class="mt-2 text-sm text-red-600">
+          <i class="fas fa-exclamation-circle mr-1"></i>Invalid email format
+        </p>
+        <p class="mt-2 text-sm text-gray-500">
+          <i class="fas fa-info-circle mr-1"></i>Optional: Contact email address
+        </p>
+      </div>
+
+      <!-- Department - Optional -->
+      <div class="mb-6">
+        <label for="departmentId" class="block text-sm font-semibold text-gray-700 mb-2">
+          Department
+        </label>
+        <div class="relative">
+          <select
+            id="departmentId"
+            name="departmentId"
+            x-model="form.departmentId"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none bg-white"
+          >
+            <option value="">-- No Department (Unassigned) --</option>
+            <% departments.forEach(department => { %>
+              <option value="<%= department.id %>" <%= lecturer && lecturer.departmentId === department.id ? 'selected' : '' %>>
+                <%= department.name %> (<%= department.faculty.name %>)
+              </option>
+            <% }); %>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <p class="mt-2 text-sm text-gray-500">
+          <i class="fas fa-info-circle mr-1"></i>Optional: Assign lecturer to a specific department
+        </p>
+      </div>
+
+      <!-- Required Fields Notice -->
+      <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+        <div class="flex">
+          <i class="fas fa-info-circle text-blue-400 mt-0.5 mr-3"></i>
+          <div class="text-sm text-blue-700">
+            <p class="font-medium">Required fields are marked with <span class="text-red-500">*</span></p>
+            <p class="mt-1">The name MUST be in RIS format (Last, First) with a comma</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+        <a
+          href="/admin/lecturers"
+          class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
+          :class="{'opacity-50 pointer-events-none': isSubmitting}"
+        >
+          <i class="fas fa-times mr-2"></i>Cancel
+        </a>
+        <button
+          type="submit"
+          :disabled="isSubmitting || !canSubmit"
+          class="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-medium rounded-lg hover:from-teal-700 hover:to-cyan-700 transition shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span x-show="!isSubmitting">
+            <i class="fas fa-save mr-2"></i><%= lecturer ? 'Update Lecturer' : 'Create Lecturer' %>
+          </span>
+          <span x-show="isSubmitting" class="flex items-center">
+            <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
+          </span>
+        </button>
+      </div>
+
+      <!-- Submit Disabled Warning -->
+      <div x-show="!canSubmit && form.name" class="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+        <div class="flex items-center">
+          <i class="fas fa-lock text-yellow-600 mr-2"></i>
+          <p class="text-sm text-yellow-700 font-medium">
+            Submit is disabled. Please fix the name format to continue.
+          </p>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<!-- Alpine.js Component -->
+<script>
+  function lecturerForm() {
+    return {
+      form: {
+        nidn: '<%= lecturer ? (lecturer.nidn || "") : "" %>',
+        name: '<%= lecturer ? lecturer.name : "" %>',
+        email: '<%= lecturer ? (lecturer.email || "") : "" %>',
+        departmentId: '<%= lecturer ? (lecturer.departmentId || "") : "" %>'
+      },
+      errors: {},
+      isSubmitting: false,
+      isNameFormatValid: <%= lecturer ? 'true' : 'false' %>,
+      isEmailFormatValid: <%= lecturer && lecturer.email ? 'true' : 'false' %>,
+
+      // RIS name format regex: Last, First
+      risNameRegex: /^[^,]+,\s*[^,]+$/,
+      emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+
+      get canSubmit() {
+        // Can only submit if name is provided and in valid RIS format
+        return this.form.name.trim() !== '' && this.isNameFormatValid;
+      },
+
+      init() {
+        // Validate on init if editing
+        if (this.form.name) {
+          this.validateNameFormat();
+        }
+        if (this.form.email) {
+          this.validateEmailFormat();
+        }
+      },
+
+      validateNameFormat() {
+        const name = this.form.name.trim();
+        this.isNameFormatValid = name !== '' && this.risNameRegex.test(name);
+      },
+
+      validateEmailFormat() {
+        const email = this.form.email.trim();
+        if (email === '') {
+          this.isEmailFormatValid = true; // Empty is valid (optional field)
+        } else {
+          this.isEmailFormatValid = this.emailRegex.test(email);
+        }
+      },
+
+      handleSubmit(event) {
+        // Clear previous errors
+        this.errors = {};
+
+        // Validate form
+        if (!this.validateForm()) {
+          event.preventDefault();
+          return false;
+        }
+
+        // Set loading state
+        this.isSubmitting = true;
+
+        // Form will submit naturally
+        return true;
+      },
+
+      validateForm() {
+        let isValid = true;
+
+        // Validate name (required and RIS format)
+        if (!this.form.name || this.form.name.trim() === '') {
+          this.errors.name = 'Lecturer name is required';
+          isValid = false;
+        } else if (!this.isNameFormatValid) {
+          this.errors.name = 'Name must be in RIS format: Last, First (example: Santoso, Budi)';
+          isValid = false;
+        }
+
+        // Validate email format if provided
+        if (this.form.email && this.form.email.trim() !== '') {
+          if (!this.isEmailFormatValid) {
+            this.errors.email = 'Invalid email format';
+            isValid = false;
+          }
+        }
+
+        // Validate NIDN format if provided (should be numeric)
+        if (this.form.nidn && this.form.nidn.trim() !== '') {
+          const nidnValue = this.form.nidn.trim();
+          if (!/^\d+$/.test(nidnValue)) {
+            this.errors.nidn = 'NIDN must contain only numbers';
+            isValid = false;
+          }
+        }
+
+        // Focus on first error field
+        if (!isValid) {
+          const firstErrorField = Object.keys(this.errors)[0];
+          if (firstErrorField) {
+            document.getElementById(firstErrorField)?.focus();
+          }
+        }
+
+        return isValid;
+      }
+    }
+  }
+</script>
