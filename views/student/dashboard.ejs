@@ -1,0 +1,161 @@
+<!-- Student Dashboard Page -->
+<div class="space-y-6">
+
+  <!-- Welcome Header -->
+  <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
+    <h1 class="text-3xl font-bold mb-2">
+      <i class="fas fa-hand-wave mr-2"></i>Welcome, <%= user.name %>!
+    </h1>
+    <p class="text-blue-100">Manage your thesis submissions and track their status</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- Total Submissions -->
+    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+          <i class="fas fa-file-upload text-white text-xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+          <p class="text-sm font-medium text-gray-500 mb-1">My Submissions</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= typeof stats !== 'undefined' && stats.totalSubmissions ? stats.totalSubmissions : '-' %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approved -->
+    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+          <i class="fas fa-check-circle text-white text-xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+          <p class="text-sm font-medium text-gray-500 mb-1">Approved</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= typeof stats !== 'undefined' && stats.approvedSubmissions ? stats.approvedSubmissions : '-' %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending -->
+    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
+          <i class="fas fa-clock text-white text-xl"></i>
+        </div>
+        <div class="ml-4 flex-1">
+          <p class="text-sm font-medium text-gray-500 mb-1">Pending</p>
+          <p class="text-2xl font-bold text-gray-900">
+            <%= typeof stats !== 'undefined' && stats.pendingSubmissions ? stats.pendingSubmissions : '-' %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">
+      <i class="fas fa-bolt text-yellow-500 mr-2"></i>Quick Actions
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <a href="/student/submit" class="group flex items-center justify-center space-x-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-md hover:shadow-lg">
+        <i class="fas fa-plus text-xl group-hover:scale-110 transition-transform"></i>
+        <span class="font-medium">Submit New Thesis</span>
+      </a>
+
+      <a href="/student/my-theses" class="group flex items-center justify-center space-x-3 px-6 py-4 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition border-2 border-blue-200 hover:border-blue-300">
+        <i class="fas fa-list text-xl group-hover:scale-110 transition-transform"></i>
+        <span class="font-medium">View My Theses</span>
+      </a>
+
+      <a href="/browse" class="group flex items-center justify-center space-x-3 px-6 py-4 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition border-2 border-gray-200 hover:border-gray-300">
+        <i class="fas fa-search text-xl group-hover:scale-110 transition-transform"></i>
+        <span class="font-medium">Browse Repository</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent Submissions -->
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">
+      <i class="fas fa-history text-gray-500 mr-2"></i>Recent Submissions
+    </h2>
+
+    <% if (typeof recentSubmissions !== 'undefined' && recentSubmissions.length > 0) { %>
+      <div class="space-y-3">
+        <% recentSubmissions.forEach(submission => { %>
+          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+            <div class="flex-1">
+              <h3 class="font-medium text-gray-900 mb-1"><%= submission.title %></h3>
+              <p class="text-sm text-gray-500">
+                <i class="fas fa-calendar mr-1"></i>
+                <%= submission.submittedAt %>
+              </p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <% if (submission.status === 'APPROVED') { %>
+                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                  <i class="fas fa-check-circle mr-1"></i>Approved
+                </span>
+              <% } else if (submission.status === 'PENDING') { %>
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                  <i class="fas fa-clock mr-1"></i>Pending
+                </span>
+              <% } else if (submission.status === 'REJECTED') { %>
+                <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                  <i class="fas fa-times-circle mr-1"></i>Rejected
+                </span>
+              <% } else { %>
+                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                  <i class="fas fa-file mr-1"></i><%= submission.status %>
+                </span>
+              <% } %>
+              <a href="/student/thesis/<%= submission.id %>" class="text-blue-600 hover:text-blue-800 transition">
+                <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="mt-4 text-center">
+        <a href="/student/my-theses" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+          View All Submissions <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+      </div>
+    <% } else { %>
+      <div class="text-center py-8">
+        <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+        <p class="text-gray-500 mb-4">You haven't submitted any theses yet</p>
+        <a href="/student/submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          <i class="fas fa-plus mr-2"></i>Submit Your First Thesis
+        </a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Help & Guidelines -->
+  <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+    <div class="flex items-start">
+      <i class="fas fa-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
+      <div>
+        <h3 class="text-sm font-semibold text-blue-900 mb-1">Need Help?</h3>
+        <p class="text-sm text-blue-800 mb-2">
+          Make sure to review the submission guidelines before uploading your thesis.
+        </p>
+        <a href="/guidelines" class="text-sm text-blue-700 hover:text-blue-900 font-medium">
+          Read Submission Guidelines <i class="fas fa-external-link-alt ml-1 text-xs"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>

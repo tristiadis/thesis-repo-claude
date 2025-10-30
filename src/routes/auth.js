@@ -8,13 +8,8 @@ const { isGuest } = require('../middleware/role');
  * Display login page
  */
 router.get('/login', isGuest, (req, res) => {
-  // Get flash message from session
-  const flashMessage = req.session.flashMessage;
-  delete req.session.flashMessage;
-
   res.render('auth/login', {
     title: 'Login',
-    flashMessage,
   });
 });
 
@@ -26,18 +21,10 @@ router.post(
   '/login',
   passport.authenticate('local', {
     failureRedirect: '/auth/login',
-    failureFlash: false,
+    failureFlash: true,
+    failureMessage: 'Invalid username or password',
   }),
   (req, res) => {
-    // Store flash message for failed authentication
-    if (!req.user) {
-      req.session.flashMessage = {
-        type: 'error',
-        message: 'Invalid username or password',
-      };
-      return res.redirect('/auth/login');
-    }
-
     // Determine redirect path based on role
     let redirectPath;
 
@@ -57,10 +44,7 @@ router.post(
     }
 
     // Set success message
-    req.session.flashMessage = {
-      type: 'success',
-      message: `Welcome back, ${req.user.name}!`,
-    };
+    req.flash('success', `Welcome back, ${req.user.name}!`);
 
     res.redirect(redirectPath);
   }
@@ -76,11 +60,7 @@ router.get('/logout', (req, res, next) => {
       return next(err);
     }
 
-    req.session.flashMessage = {
-      type: 'success',
-      message: 'You have been logged out successfully',
-    };
-
+    req.flash('success', 'You have been logged out successfully');
     res.redirect('/auth/login');
   });
 });

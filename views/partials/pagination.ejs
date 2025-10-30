@@ -1,0 +1,139 @@
+<%
+  // Pagination Parameters:
+  // - currentPage: Current page number (1-based)
+  // - totalPages: Total number of pages
+  // - baseUrl: Base URL for pagination links (e.g., '/admin/theses')
+  // - totalItems: Total number of items (optional)
+  // - itemsPerPage: Items per page (optional)
+
+  const maxVisiblePages = 5; // Maximum page numbers to show
+  const halfVisible = Math.floor(maxVisiblePages / 2);
+
+  let startPage = Math.max(1, currentPage - halfVisible);
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+  // Adjust startPage if we're near the end
+  if (endPage - startPage < maxVisiblePages - 1) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  const pages = [];
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+
+  const hasPrevious = currentPage > 1;
+  const hasNext = currentPage < totalPages;
+
+  // Helper function to build URL with query params
+  const buildUrl = (page) => {
+    const url = new URL(baseUrl, 'http://localhost');
+    url.searchParams.set('page', page);
+    return url.pathname + url.search;
+  };
+%>
+
+<% if (totalPages > 1) { %>
+  <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 mt-6">
+
+    <!-- Items Info (Left Side) -->
+    <div class="text-sm text-gray-600">
+      <% if (typeof totalItems !== 'undefined' && typeof itemsPerPage !== 'undefined') { %>
+        <p>
+          Showing
+          <span class="font-medium"><%= Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) %></span>
+          to
+          <span class="font-medium"><%= Math.min(currentPage * itemsPerPage, totalItems) %></span>
+          of
+          <span class="font-medium"><%= totalItems %></span>
+          results
+        </p>
+      <% } else { %>
+        <p>
+          Page <span class="font-medium"><%= currentPage %></span> of <span class="font-medium"><%= totalPages %></span>
+        </p>
+      <% } %>
+    </div>
+
+    <!-- Pagination Controls (Right Side) -->
+    <div class="flex items-center space-x-2">
+
+      <!-- Previous Button -->
+      <% if (hasPrevious) { %>
+        <a href="<%= buildUrl(currentPage - 1) %>"
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+          <i class="fas fa-chevron-left mr-2"></i>
+          <span class="hidden sm:inline">Previous</span>
+        </a>
+      <% } else { %>
+        <span class="inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed">
+          <i class="fas fa-chevron-left mr-2"></i>
+          <span class="hidden sm:inline">Previous</span>
+        </span>
+      <% } %>
+
+      <!-- Page Numbers (Desktop) -->
+      <div class="hidden md:flex items-center space-x-1">
+
+        <!-- First Page (if not visible) -->
+        <% if (startPage > 1) { %>
+          <a href="<%= buildUrl(1) %>"
+             class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition">
+            1
+          </a>
+          <% if (startPage > 2) { %>
+            <span class="px-2 text-gray-500">...</span>
+          <% } %>
+        <% } %>
+
+        <!-- Page Numbers -->
+        <% pages.forEach(page => { %>
+          <% if (page === currentPage) { %>
+            <!-- Current Page -->
+            <span class="inline-flex items-center justify-center w-10 h-10 border-2 border-blue-500 text-sm font-bold rounded-lg text-white bg-blue-600 shadow-sm">
+              <%= page %>
+            </span>
+          <% } else { %>
+            <!-- Other Pages -->
+            <a href="<%= buildUrl(page) %>"
+               class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition">
+              <%= page %>
+            </a>
+          <% } %>
+        <% }); %>
+
+        <!-- Last Page (if not visible) -->
+        <% if (endPage < totalPages) { %>
+          <% if (endPage < totalPages - 1) { %>
+            <span class="px-2 text-gray-500">...</span>
+          <% } %>
+          <a href="<%= buildUrl(totalPages) %>"
+             class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition">
+            <%= totalPages %>
+          </a>
+        <% } %>
+      </div>
+
+      <!-- Current Page Indicator (Mobile) -->
+      <div class="md:hidden inline-flex items-center px-4 py-2 border-2 border-blue-500 text-sm font-bold rounded-lg text-white bg-blue-600">
+        <%= currentPage %> / <%= totalPages %>
+      </div>
+
+      <!-- Next Button -->
+      <% if (hasNext) { %>
+        <a href="<%= buildUrl(currentPage + 1) %>"
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+          <span class="hidden sm:inline">Next</span>
+          <i class="fas fa-chevron-right ml-2"></i>
+        </a>
+      <% } else { %>
+        <span class="inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed">
+          <span class="hidden sm:inline">Next</span>
+          <i class="fas fa-chevron-right ml-2"></i>
+        </span>
+      <% } %>
+
+    </div>
+
+  </div>
+<% } %>

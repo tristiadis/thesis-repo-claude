@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Student Portal - Thesis Repository</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            student: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+
+  <!-- Navigation Bar -->
+  <nav class="bg-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-4">
+          <a href="/student/dashboard" class="flex items-center space-x-3 hover:opacity-80 transition">
+            <i class="fas fa-graduation-cap text-student-600 text-3xl"></i>
+            <div class="hidden sm:block">
+              <div class="text-lg font-bold text-gray-900">Student Portal</div>
+              <div class="text-xs text-gray-500">Thesis Repository</div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <div class="hidden md:flex items-center space-x-6">
+
+          <!-- Dashboard -->
+          <a href="/student/dashboard" class="flex items-center space-x-2 text-gray-700 hover:text-student-600 font-medium transition">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+          </a>
+
+          <!-- My Theses -->
+          <a href="/student/my-theses" class="flex items-center space-x-2 text-gray-700 hover:text-student-600 font-medium transition">
+            <i class="fas fa-file-alt"></i>
+            <span>My Theses</span>
+          </a>
+
+          <!-- Submit New Thesis (conditional) -->
+          <% if (typeof canSubmit === 'undefined' || canSubmit) { %>
+            <a href="/student/submit" class="flex items-center space-x-2 bg-student-600 text-white px-4 py-2 rounded-lg hover:bg-student-700 transition font-medium">
+              <i class="fas fa-plus-circle"></i>
+              <span>Submit New</span>
+            </a>
+          <% } %>
+
+          <!-- User Menu -->
+          <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 hover:text-student-600 transition">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-student-500 to-student-700 flex items-center justify-center text-white">
+                <i class="fas fa-user text-sm"></i>
+              </div>
+              <span class="font-medium"><%= user.name %></span>
+              <i class="fas fa-chevron-down text-sm"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div x-show="open" @click.away="open = false"
+                 x-transition
+                 class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+
+              <!-- User Info -->
+              <div class="px-4 py-3 border-b border-gray-200">
+                <p class="font-semibold text-gray-900"><%= user.name %></p>
+                <p class="text-sm text-gray-500"><%= user.email || user.username %></p>
+              </div>
+
+              <!-- Menu Items -->
+              <a href="/student/profile" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="fas fa-user w-5"></i>
+                <span>My Profile</span>
+              </a>
+
+              <a href="/student/settings" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="fas fa-cog w-5"></i>
+                <span>Settings</span>
+              </a>
+
+              <a href="/help" class="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="fas fa-question-circle w-5"></i>
+                <span>Help & Support</span>
+              </a>
+
+              <hr class="my-2">
+
+              <a href="/auth/logout" class="flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 transition">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <div class="md:hidden">
+          <button @click="mobileMenuOpen = !mobileMenuOpen"
+                  x-data="{ mobileMenuOpen: false }"
+                  class="text-gray-700 hover:text-student-600">
+            <i class="fas fa-bars text-2xl"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Mobile Menu -->
+      <div x-show="mobileMenuOpen"
+           x-data="{ mobileMenuOpen: false }"
+           @click.away="mobileMenuOpen = false"
+           x-transition
+           class="md:hidden border-t border-gray-200 py-4">
+
+        <a href="/student/dashboard" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition">
+          <i class="fas fa-tachometer-alt w-5"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="/student/my-theses" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition">
+          <i class="fas fa-file-alt w-5"></i>
+          <span>My Theses</span>
+        </a>
+
+        <% if (typeof canSubmit === 'undefined' || canSubmit) { %>
+          <a href="/student/submit" class="flex items-center space-x-3 px-4 py-3 text-student-600 hover:bg-student-50 transition font-medium">
+            <i class="fas fa-plus-circle w-5"></i>
+            <span>Submit New Thesis</span>
+          </a>
+        <% } %>
+
+        <hr class="my-2">
+
+        <a href="/student/profile" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition">
+          <i class="fas fa-user w-5"></i>
+          <span>My Profile</span>
+        </a>
+
+        <a href="/student/settings" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition">
+          <i class="fas fa-cog w-5"></i>
+          <span>Settings</span>
+        </a>
+
+        <a href="/help" class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition">
+          <i class="fas fa-question-circle w-5"></i>
+          <span>Help & Support</span>
+        </a>
+
+        <a href="/auth/logout" class="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition">
+          <i class="fas fa-sign-out-alt w-5"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <%- include('../partials/flash') %>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <!-- About -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">About</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">
+            Submit and manage your thesis submissions through our digital repository system.
+          </p>
+        </div>
+
+        <!-- Quick Links -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/student/dashboard" class="text-gray-600 hover:text-student-600 transition">Dashboard</a></li>
+            <li><a href="/student/my-theses" class="text-gray-600 hover:text-student-600 transition">My Theses</a></li>
+            <li><a href="/guidelines" class="text-gray-600 hover:text-student-600 transition">Submission Guidelines</a></li>
+            <li><a href="/faq" class="text-gray-600 hover:text-student-600 transition">FAQ</a></li>
+          </ul>
+        </div>
+
+        <!-- Help & Support -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/help" class="text-gray-600 hover:text-student-600 transition">Help Center</a></li>
+            <li><a href="/contact" class="text-gray-600 hover:text-student-600 transition">Contact Support</a></li>
+            <li><a href="/tutorials" class="text-gray-600 hover:text-student-600 transition">Video Tutorials</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Copyright -->
+      <div class="border-t border-gray-200 mt-8 pt-6 text-center">
+        <p class="text-sm text-gray-600">
+          &copy; <%= new Date().getFullYear() %> Thesis Repository System. Student Portal.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating Help Button -->
+  <button onclick="window.location.href='/help'"
+          class="fixed bottom-8 right-8 w-14 h-14 bg-student-600 text-white rounded-full shadow-lg hover:bg-student-700 transition flex items-center justify-center z-50">
+    <i class="fas fa-question text-xl"></i>
+  </button>
+
+</body>
+</html>

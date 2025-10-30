@@ -1,7 +1,9 @@
 const express = require('express');
 const session = require('express-session');
+const flash = require('connect-flash');
 const passport = require('./config/passport');
 const path = require('path');
+const { layoutMiddleware, setLayoutDefaults } = require('./middleware/layout');
 
 const app = express();
 
@@ -41,12 +43,21 @@ app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Flash messages
+app.use(flash());
+
+// Layout middleware - adds res.renderWithLayout()
+app.use(layoutMiddleware);
+
 // Make user available in all views
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
   res.locals.isAuthenticated = req.isAuthenticated();
   next();
 });
+
+// Set layout defaults (notification counts, etc.)
+app.use(setLayoutDefaults);
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -70,26 +81,13 @@ app.get('/', (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).send(`
-    <html>
-      <head>
-        <title>404 - Page Not Found</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 100px;
-          }
-          h1 { color: #dc3545; }
-        </style>
-      </head>
-      <body>
-        <h1>404</h1>
-        <p>Page not found</p>
-        <a href="/">Go back home</a>
-      </body>
-    </html>
-  `);
+  res.status(404).render('error', {
+    statusCode: 404,
+    title: 'Page Not Found',
+    message: 'The page you are looking for does not exist',
+    description: 'The requested URL was not found on this server.',
+    user: req.user || null,
+  });
 });
 
 // Error handler
@@ -98,35 +96,24 @@ app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
+  // Handle JSON requests
   if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       error: {
         message: message,
         status: statusCode,
       },
     });
-  } else {
-    res.status(statusCode).send(`
-      <html>
-        <head>
-          <title>Error</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              text-align: center;
-              margin-top: 100px;
-            }
-            h1 { color: #dc3545; }
-          </style>
-        </head>
-        <body>
-          <h1>Error ${statusCode}</h1>
-          <p>${message}</p>
-          <a href="/">Go back home</a>
-        </body>
-      </html>
-    `);
   }
+
+  // Render error page
+  res.status(statusCode).render('error', {
+    statusCode: statusCode,
+    title: statusCode === 500 ? 'Server Error' : 'Error',
+    message: message,
+    description: statusCode === 500 ? 'Something went wrong on our end. Please try again later.' : null,
+    user: req.user || null,
+  });
 });
 
 module.exports = app;
