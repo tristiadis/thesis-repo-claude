@@ -33,4 +33,10 @@ router.post('/:id/request-changes', reviewController.requestChanges);
 // POST /admin/review/:id/reject - Reject thesis
 router.post('/:id/reject', reviewController.reject);
 
+// POST /admin/review/:thesisId/files/:fileId/embargo - Set file embargo
+router.post('/:thesisId/files/:fileId/embargo', reviewController.setFileEmbargo);
+
+// POST /admin/review/:thesisId/files/bulk-embargo - Bulk set embargo for all files
+router.post('/:thesisId/files/bulk-embargo', reviewController.bulkSetEmbargo);
+
 module.exports = router;

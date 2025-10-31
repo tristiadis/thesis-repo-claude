@@ -253,6 +253,20 @@
 
       <!-- RIGHT PANEL (40% - 2 columns) -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- Bulk Embargo Button -->
+        <div class="flex justify-end">
+          <button
+            type="button"
+            onclick="openBulkEmbargoModal()"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Apply Embargo to All Files
+          </button>
+        </div>
+
         <!-- Files List -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-6">
           <div class="px-6 py-4 border-b border-gray-200">
@@ -261,7 +275,7 @@
           </div>
           <div class="divide-y divide-gray-200">
             <% files.forEach(file => { %>
-              <div class="px-6 py-4">
+              <div class="px-6 py-4" id="file-<%= file.id %>">
                 <div class="flex items-start justify-between">
                   <div class="flex-1 min-w-0">
                     <!-- File Type Badge -->
@@ -287,6 +301,96 @@
                       <%= file.downloadCount %> downloads
                     </p>
                   </div>
+                </div>
+
+                <!-- Embargo Status Badge -->
+                <div class="mt-3" id="embargo-status-<%= file.id %>">
+                  <% if (file.accessLevel === 'EMBARGOED' && file.embargoUntil) { %>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      🟡 Embargoed until <%= new Date(file.embargoUntil).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                    </span>
+                  <% } else if (file.accessLevel === 'RESTRICTED') { %>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      🔴 Restricted Access
+                    </span>
+                  <% } else { %>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      🟢 Open Access
+                    </span>
+                  <% } %>
+                </div>
+
+                <!-- Embargo Controls -->
+                <div class="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <label class="block text-xs font-medium text-gray-700 mb-2">Access Level</label>
+
+                  <div class="space-y-2">
+                    <!-- Public -->
+                    <label class="flex items-center">
+                      <input
+                        type="radio"
+                        name="accessLevel-<%= file.id %>"
+                        value="PUBLIC"
+                        <%= file.accessLevel === 'PUBLIC' ? 'checked' : '' %>
+                        onchange="updateEmbargoUI(<%= file.id %>, 'PUBLIC')"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      >
+                      <span class="ml-2 text-sm text-gray-700">Public</span>
+                    </label>
+
+                    <!-- Embargoed -->
+                    <label class="flex items-start">
+                      <input
+                        type="radio"
+                        name="accessLevel-<%= file.id %>"
+                        value="EMBARGOED"
+                        <%= file.accessLevel === 'EMBARGOED' ? 'checked' : '' %>
+                        onchange="updateEmbargoUI(<%= file.id %>, 'EMBARGOED')"
+                        class="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      >
+                      <div class="ml-2 flex-1">
+                        <span class="text-sm text-gray-700">Embargoed until:</span>
+                        <input
+                          type="date"
+                          id="embargoDate-<%= file.id %>"
+                          value="<%= file.embargoUntil ? new Date(file.embargoUntil).toISOString().split('T')[0] : '' %>"
+                          min="<%= new Date().toISOString().split('T')[0] %>"
+                          class="mt-1 block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                        <textarea
+                          id="embargoReason-<%= file.id %>"
+                          rows="2"
+                          placeholder="Reason (optional)"
+                          class="mt-2 block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        ><%= file.embargoReason || '' %></textarea>
+                      </div>
+                    </label>
+
+                    <!-- Restricted -->
+                    <label class="flex items-center">
+                      <input
+                        type="radio"
+                        name="accessLevel-<%= file.id %>"
+                        value="RESTRICTED"
+                        <%= file.accessLevel === 'RESTRICTED' ? 'checked' : '' %>
+                        onchange="updateEmbargoUI(<%= file.id %>, 'RESTRICTED')"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      >
+                      <span class="ml-2 text-sm text-gray-700">Restricted (Admin only)</span>
+                    </label>
+                  </div>
+
+                  <!-- Save Button -->
+                  <button
+                    type="button"
+                    onclick="saveEmbargoSettings(<%= file.id %>)"
+                    class="mt-3 w-full inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Settings
+                  </button>
                 </div>
 
                 <!-- Actions -->
@@ -592,6 +696,145 @@
   </div>
 </div>
 
+<!-- Bulk Embargo Modal -->
+<div
+  id="bulkEmbargoModal"
+  class="fixed inset-0 z-50 hidden overflow-y-auto"
+  aria-labelledby="modal-title"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Background overlay -->
+    <div
+      class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+      aria-hidden="true"
+      onclick="closeBulkEmbargoModal()"
+    ></div>
+
+    <!-- Modal panel -->
+    <div class="inline-block w-full max-w-2xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">Apply Embargo to All Files</h3>
+        <button
+          type="button"
+          onclick="closeBulkEmbargoModal()"
+          class="text-gray-400 hover:text-gray-500"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="bulkEmbargoForm" onsubmit="event.preventDefault(); saveBulkEmbargo();">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Access Level <span class="text-red-500">*</span>
+          </label>
+
+          <div class="space-y-2">
+            <!-- Public -->
+            <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="radio"
+                name="bulkAccessLevel"
+                value="PUBLIC"
+                checked
+                onchange="updateBulkEmbargoUI('PUBLIC')"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              >
+              <span class="ml-2 text-sm font-medium text-gray-700">Public - Open Access</span>
+            </label>
+
+            <!-- Embargoed -->
+            <label class="flex items-start p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="radio"
+                name="bulkAccessLevel"
+                value="EMBARGOED"
+                onchange="updateBulkEmbargoUI('EMBARGOED')"
+                class="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300"
+              >
+              <div class="ml-2 flex-1">
+                <span class="text-sm font-medium text-gray-700">Embargoed</span>
+                <div id="bulkEmbargoFields" class="mt-2 space-y-2" style="display: none;">
+                  <div>
+                    <label for="bulkEmbargoDate" class="block text-xs font-medium text-gray-700 mb-1">
+                      Embargo until <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="bulkEmbargoDate"
+                      min="<%= new Date().toISOString().split('T')[0] %>"
+                      value="<%= new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0] %>"
+                      class="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                  </div>
+                  <div>
+                    <label for="bulkEmbargoReason" class="block text-xs font-medium text-gray-700 mb-1">
+                      Reason (optional)
+                    </label>
+                    <textarea
+                      id="bulkEmbargoReason"
+                      rows="3"
+                      placeholder="Enter reason for embargo..."
+                      class="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            <!-- Restricted -->
+            <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="radio"
+                name="bulkAccessLevel"
+                value="RESTRICTED"
+                onchange="updateBulkEmbargoUI('RESTRICTED')"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              >
+              <span class="ml-2 text-sm font-medium text-gray-700">Restricted - Admin Only</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">
+                This will apply the selected embargo settings to <strong>all <%= files.length %> files</strong> in this thesis.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3">
+          <button
+            type="button"
+            onclick="closeBulkEmbargoModal()"
+            class="px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-6 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Apply to All Files
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
   // PDF Preview Modal Functions
   function previewFile(thesisId, fileId, filename) {
@@ -677,12 +920,164 @@
     document.getElementById('rejectCharCount').textContent = e.target.value.length;
   });
 
+  // Embargo Functions
+  function updateEmbargoUI(fileId, accessLevel) {
+    const embargoDate = document.getElementById('embargoDate-' + fileId);
+    const embargoReason = document.getElementById('embargoReason-' + fileId);
+
+    if (accessLevel === 'EMBARGOED') {
+      embargoDate.disabled = false;
+      embargoReason.disabled = false;
+    } else {
+      embargoDate.disabled = true;
+      embargoReason.disabled = true;
+    }
+  }
+
+  async function saveEmbargoSettings(fileId) {
+    const accessLevel = document.querySelector('input[name="accessLevel-' + fileId + '"]:checked').value;
+    const embargoDate = document.getElementById('embargoDate-' + fileId).value;
+    const embargoReason = document.getElementById('embargoReason-' + fileId).value;
+
+    // Validate embargo date if EMBARGOED
+    if (accessLevel === 'EMBARGOED' && !embargoDate) {
+      alert('Please select an embargo date');
+      return;
+    }
+
+    const data = {
+      accessLevel: accessLevel,
+      embargoUntil: accessLevel === 'EMBARGOED' ? embargoDate : null,
+      embargoReason: accessLevel === 'EMBARGOED' ? embargoReason : null,
+    };
+
+    try {
+      const response = await fetch('/admin/review/<%= thesis.id %>/files/' + fileId + '/embargo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update embargo status badge
+        updateEmbargoStatusBadge(fileId, result.file);
+        alert('Embargo settings saved successfully!');
+      } else {
+        alert('Error: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error saving embargo settings:', error);
+      alert('Failed to save embargo settings');
+    }
+  }
+
+  function updateEmbargoStatusBadge(fileId, file) {
+    const statusElement = document.getElementById('embargo-status-' + fileId);
+    let badgeHTML = '';
+
+    if (file.accessLevel === 'EMBARGOED' && file.embargoUntil) {
+      const embargoDate = new Date(file.embargoUntil);
+      const formattedDate = embargoDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      badgeHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+        🟡 Embargoed until ${formattedDate}
+      </span>`;
+    } else if (file.accessLevel === 'RESTRICTED') {
+      badgeHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        🔴 Restricted Access
+      </span>`;
+    } else {
+      badgeHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        🟢 Open Access
+      </span>`;
+    }
+
+    statusElement.innerHTML = badgeHTML;
+  }
+
+  // Bulk Embargo Modal Functions
+  function openBulkEmbargoModal() {
+    const modal = document.getElementById('bulkEmbargoModal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Reset form
+    document.getElementById('bulkEmbargoForm').reset();
+    updateBulkEmbargoUI('PUBLIC');
+  }
+
+  function closeBulkEmbargoModal() {
+    const modal = document.getElementById('bulkEmbargoModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+  }
+
+  function updateBulkEmbargoUI(accessLevel) {
+    const bulkEmbargoFields = document.getElementById('bulkEmbargoFields');
+
+    if (accessLevel === 'EMBARGOED') {
+      bulkEmbargoFields.style.display = 'block';
+    } else {
+      bulkEmbargoFields.style.display = 'none';
+    }
+  }
+
+  async function saveBulkEmbargo() {
+    const accessLevel = document.querySelector('input[name="bulkAccessLevel"]:checked').value;
+    const embargoDate = document.getElementById('bulkEmbargoDate').value;
+    const embargoReason = document.getElementById('bulkEmbargoReason').value;
+
+    // Validate embargo date if EMBARGOED
+    if (accessLevel === 'EMBARGOED' && !embargoDate) {
+      alert('Please select an embargo date');
+      return;
+    }
+
+    const data = {
+      accessLevel: accessLevel,
+      embargoUntil: accessLevel === 'EMBARGOED' ? embargoDate : null,
+      embargoReason: accessLevel === 'EMBARGOED' ? embargoReason : null,
+    };
+
+    try {
+      const response = await fetch('/admin/review/<%= thesis.id %>/files/bulk-embargo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        closeBulkEmbargoModal();
+        alert('Embargo settings applied to ' + result.count + ' files successfully!');
+        // Reload page to show updated embargo settings
+        window.location.reload();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error saving bulk embargo settings:', error);
+      alert('Failed to save bulk embargo settings');
+    }
+  }
+
   // Close modals on ESC key
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
       closePdfModal();
       closeRequestChangesModal();
       closeRejectModal();
+      closeBulkEmbargoModal();
     }
   });
 </script>

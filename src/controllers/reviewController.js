@@ -631,6 +631,187 @@ const reject = async (req, res, next) => {
 };
 
 /**
+ * Set File Embargo Settings
+ * POST /admin/review/:thesisId/files/:fileId/embargo
+ */
+const setFileEmbargo = async (req, res, next) => {
+  try {
+    const { thesisId, fileId } = req.params;
+    const { accessLevel, embargoUntil, embargoReason } = req.body;
+
+    // Validate access level
+    const validAccessLevels = ['PUBLIC', 'EMBARGOED', 'RESTRICTED'];
+    if (!accessLevel || !validAccessLevels.includes(accessLevel)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid access level',
+      });
+    }
+
+    // Validate embargo date if EMBARGOED
+    if (accessLevel === 'EMBARGOED') {
+      if (!embargoUntil) {
+        return res.status(400).json({
+          success: false,
+          message: 'Embargo date is required for embargoed files',
+        });
+      }
+
+      const embargoDate = new Date(embargoUntil);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (embargoDate <= today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Embargo date must be in the future',
+        });
+      }
+    }
+
+    // Get file and verify it belongs to thesis
+    const file = await prisma.thesisFile.findUnique({
+      where: { id: parseInt(fileId) },
+      select: {
+        id: true,
+        thesisId: true,
+        filename: true,
+      },
+    });
+
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found',
+      });
+    }
+
+    if (file.thesisId !== parseInt(thesisId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied',
+      });
+    }
+
+    // Update file embargo settings
+    const updatedFile = await prisma.thesisFile.update({
+      where: { id: parseInt(fileId) },
+      data: {
+        accessLevel: accessLevel,
+        embargoUntil: accessLevel === 'EMBARGOED' ? new Date(embargoUntil) : null,
+        embargoReason: accessLevel === 'EMBARGOED' ? embargoReason || null : null,
+      },
+    });
+
+    console.log(
+      `Embargo settings updated for file ${file.filename}: ${accessLevel} by admin ${req.user.username}`
+    );
+
+    res.json({
+      success: true,
+      message: 'Embargo settings updated successfully',
+      file: {
+        id: updatedFile.id,
+        accessLevel: updatedFile.accessLevel,
+        embargoUntil: updatedFile.embargoUntil,
+        embargoReason: updatedFile.embargoReason,
+      },
+    });
+  } catch (error) {
+    console.error('Error setting file embargo:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update embargo settings',
+    });
+  }
+};
+
+/**
+ * Bulk Set Embargo for All Files in Thesis
+ * POST /admin/review/:thesisId/files/bulk-embargo
+ */
+const bulkSetEmbargo = async (req, res, next) => {
+  try {
+    const { thesisId } = req.params;
+    const { accessLevel, embargoUntil, embargoReason } = req.body;
+
+    // Validate access level
+    const validAccessLevels = ['PUBLIC', 'EMBARGOED', 'RESTRICTED'];
+    if (!accessLevel || !validAccessLevels.includes(accessLevel)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid access level',
+      });
+    }
+
+    // Validate embargo date if EMBARGOED
+    if (accessLevel === 'EMBARGOED') {
+      if (!embargoUntil) {
+        return res.status(400).json({
+          success: false,
+          message: 'Embargo date is required for embargoed files',
+        });
+      }
+
+      const embargoDate = new Date(embargoUntil);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (embargoDate <= today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Embargo date must be in the future',
+        });
+      }
+    }
+
+    // Verify thesis exists
+    const thesis = await prisma.thesis.findUnique({
+      where: { id: parseInt(thesisId) },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    if (!thesis) {
+      return res.status(404).json({
+        success: false,
+        message: 'Thesis not found',
+      });
+    }
+
+    // Update all files for this thesis
+    const updateResult = await prisma.thesisFile.updateMany({
+      where: {
+        thesisId: parseInt(thesisId),
+      },
+      data: {
+        accessLevel: accessLevel,
+        embargoUntil: accessLevel === 'EMBARGOED' ? new Date(embargoUntil) : null,
+        embargoReason: accessLevel === 'EMBARGOED' ? embargoReason || null : null,
+      },
+    });
+
+    console.log(
+      `Bulk embargo applied to ${updateResult.count} files for thesis ${thesisId}: ${accessLevel} by admin ${req.user.username}`
+    );
+
+    res.json({
+      success: true,
+      message: `Embargo settings applied to ${updateResult.count} files`,
+      count: updateResult.count,
+    });
+  } catch (error) {
+    console.error('Error setting bulk embargo:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to apply bulk embargo settings',
+    });
+  }
+};
+
+/**
  * Helper function to format file size
  */
 function formatFileSize(bytes) {
@@ -651,4 +832,6 @@ module.exports = {
   approve,
   requestChanges,
   reject,
+  setFileEmbargo,
+  bulkSetEmbargo,
 };
