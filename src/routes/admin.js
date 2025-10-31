@@ -6,12 +6,19 @@ const facultyController = require('../controllers/facultyController');
 const departmentController = require('../controllers/departmentController');
 const lecturerController = require('../controllers/lecturerController');
 const userController = require('../controllers/userController');
+const reviewRoutes = require('./review');
 
 /**
  * GET /admin/dashboard
  * Admin dashboard with statistics and recent data
  */
 router.get('/dashboard', requireAdmin, adminController.dashboard);
+
+/**
+ * Review Routes
+ * Mount review routes under /admin/review
+ */
+router.use('/review', reviewRoutes);
 
 /**
  * Faculty Routes
