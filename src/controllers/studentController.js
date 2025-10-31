@@ -547,9 +547,165 @@ function getStatusMessage(status) {
   return messages[status] || '';
 }
 
+/**
+ * Upload File Handler
+ * Handles individual file uploads via AJAX/Dropzone
+ */
+const uploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded',
+      });
+    }
+
+    // Get file info
+    const file = req.file;
+    const fileType = req.body.fileType; // COVER, CHAPTER_1, etc.
+
+    // Validate file type parameter
+    const validFileTypes = [
+      'COVER',
+      'CHAPTER_1',
+      'CHAPTER_2',
+      'CHAPTER_3',
+      'CHAPTER_4',
+      'CHAPTER_5',
+      'BIBLIOGRAPHY',
+      'APPENDIX',
+      'OTHER',
+    ];
+
+    if (!fileType || !validFileTypes.includes(fileType)) {
+      // Delete uploaded file
+      await fs.unlink(file.path).catch(() => {});
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid file type',
+      });
+    }
+
+    // Initialize session uploaded files array if not exists
+    if (!req.session.uploadedFiles) {
+      req.session.uploadedFiles = [];
+    }
+
+    // Remove any existing file of the same type
+    req.session.uploadedFiles = req.session.uploadedFiles.filter(
+      (f) => f.type !== fileType
+    );
+
+    // Add new file to session
+    const fileData = {
+      type: fileType,
+      filename: file.filename,
+      originalname: file.originalname,
+      path: file.path,
+      size: file.size,
+      mimetype: file.mimetype,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    req.session.uploadedFiles.push(fileData);
+
+    // Save session
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to save file information',
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'File uploaded successfully',
+        file: {
+          type: fileType,
+          filename: file.originalname,
+          size: file.size,
+          uploadedAt: fileData.uploadedAt,
+        },
+      });
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload file',
+    });
+  }
+};
+
+/**
+ * Delete Uploaded File
+ * Remove file from session and filesystem
+ */
+const deleteFile = async (req, res) => {
+  try {
+    const { fileType } = req.params;
+
+    if (!req.session.uploadedFiles) {
+      return res.status(404).json({
+        success: false,
+        message: 'No files found',
+      });
+    }
+
+    // Find file in session
+    const fileIndex = req.session.uploadedFiles.findIndex(
+      (f) => f.type === fileType
+    );
+
+    if (fileIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found',
+      });
+    }
+
+    // Get file info and delete from filesystem
+    const file = req.session.uploadedFiles[fileIndex];
+    try {
+      await fs.unlink(file.path);
+    } catch (err) {
+      console.error('Error deleting file from filesystem:', err);
+    }
+
+    // Remove from session
+    req.session.uploadedFiles.splice(fileIndex, 1);
+
+    // Save session
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to update file information',
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'File deleted successfully',
+      });
+    });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete file',
+    });
+  }
+};
+
 module.exports = {
   dashboard,
   submitForm,
   saveDraft,
   submitThesis,
+  uploadFile,
+  deleteFile,
 };

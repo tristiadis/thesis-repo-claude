@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { requireStudent } = require('../middleware/role');
+const { uploadSingle } = require('../middleware/upload');
 const studentController = require('../controllers/studentController');
 
 // ============================================================================
@@ -39,5 +40,21 @@ router.post('/submit/draft', requireStudent, studentController.saveDraft);
  * Submit thesis for review
  */
 router.post('/submit', requireStudent, studentController.submitThesis);
+
+// ============================================================================
+// FILE UPLOADS
+// ============================================================================
+
+/**
+ * POST /student/upload
+ * Upload a single file (used by Dropzone.js)
+ */
+router.post('/upload', requireStudent, uploadSingle, studentController.uploadFile);
+
+/**
+ * DELETE /student/upload/:fileType
+ * Delete an uploaded file
+ */
+router.delete('/upload/:fileType', requireStudent, studentController.deleteFile);
 
 module.exports = router;

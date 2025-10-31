@@ -1,213 +1,152 @@
-<!-- Thesis Submission Form -->
-<div x-data="submissionForm()" x-init="init()" class="space-y-6">
+<!-- Multi-Step Thesis Submission Form -->
+<div x-data="multiStepForm()" x-init="init()" class="space-y-6">
 
-  <!-- Progress Indicator -->
+  <!-- Progress Steps Indicator -->
   <div class="bg-white rounded-xl shadow-sm p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">Submission Progress</h2>
-      <span class="text-sm text-gray-500" x-text="completionPercentage + '% Complete'"></span>
-    </div>
-    <div class="w-full bg-gray-200 rounded-full h-3">
-      <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" :style="`width: ${completionPercentage}%`"></div>
+    <div class="flex items-center justify-between">
+      <template x-for="(step, index) in steps" :key="index">
+        <div class="flex items-center flex-1">
+          <!-- Step Circle -->
+          <div
+            class="flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all"
+            :class="{
+              'bg-blue-600 text-white': currentStep === index,
+              'bg-green-500 text-white': currentStep > index,
+              'bg-gray-200 text-gray-500': currentStep < index
+            }"
+          >
+            <span x-show="currentStep <= index" x-text="index + 1"></span>
+            <i x-show="currentStep > index" data-lucide="check" class="w-6 h-6"></i>
+          </div>
+
+          <!-- Step Label -->
+          <div class="ml-3 flex-1">
+            <p
+              class="text-sm font-semibold"
+              :class="currentStep >= index ? 'text-gray-900' : 'text-gray-400'"
+              x-text="step.title"
+            ></p>
+          </div>
+
+          <!-- Connector Line -->
+          <div
+            x-show="index < steps.length - 1"
+            class="flex-1 h-1 mx-4"
+            :class="currentStep > index ? 'bg-green-500' : 'bg-gray-200'"
+          ></div>
+        </div>
+      </template>
     </div>
   </div>
 
-  <!-- Validation Checklist -->
-  <div class="bg-white rounded-xl shadow-sm p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">
-      <i data-lucide="check-circle" class="w-5 h-5 inline mr-2"></i>
-      Requirements Checklist
-    </h2>
+  <!-- Form Container -->
+  <form id="submissionForm" @submit.prevent="handleSubmit">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <!-- Basic Info Checks -->
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasTitle ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasTitle ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasTitle ? 'text-gray-700' : 'text-red-600' %>">
-          Title provided
-        </span>
-      </div>
+    <!-- STEP 1: Basic Information -->
+    <div x-show="currentStep === 0" x-transition class="bg-white rounded-xl shadow-sm p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        <i data-lucide="file-text" class="w-6 h-6 inline mr-2"></i>
+        Basic Information
+      </h2>
 
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasAuthor ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasAuthor ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasAuthor ? 'text-gray-700' : 'text-red-600' %>">
-          Author information complete
-        </span>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasDepartment ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasDepartment ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasDepartment ? 'text-gray-700' : 'text-red-600' %>">
-          Department selected
-        </span>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasGraduationYear ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasGraduationYear ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasGraduationYear ? 'text-gray-700' : 'text-red-600' %>">
-          Graduation year provided
-        </span>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasAbstract ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasAbstract ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasAbstract ? 'text-gray-700' : 'text-red-600' %>">
-          Abstract provided
-        </span>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasKeywords ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasKeywords ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasKeywords ? 'text-gray-700' : 'text-red-600' %>">
-          Keywords provided
-        </span>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasAdvisor1 ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasAdvisor1 ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasAdvisor1 ? 'text-gray-700' : 'text-red-600' %>">
-          Main advisor selected
-        </span>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <i data-lucide="<%= validation.checks.hasRequiredFiles ? 'check-circle' : 'x-circle' %>"
-           class="w-5 h-5 <%= validation.checks.hasRequiredFiles ? 'text-green-500' : 'text-red-500' %>"></i>
-        <span class="text-sm <%= validation.checks.hasRequiredFiles ? 'text-gray-700' : 'text-red-600' %>">
-          All required files uploaded
-        </span>
-      </div>
-    </div>
-
-    <% if (!validation.isValid) { %>
-    <div class="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded">
-      <p class="text-sm text-red-800 font-medium">Please complete all required fields before submitting.</p>
-    </div>
-    <% } %>
-  </div>
-
-  <!-- Submission Form -->
-  <form id="submissionForm" @submit.prevent="handleSubmit" class="space-y-6">
-
-    <!-- Section 1: Basic Information -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-semibold text-gray-900">
-          <i data-lucide="file-text" class="w-5 h-5 inline mr-2"></i>
-          Basic Information
-        </h2>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Title (Indonesian) -->
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+      <div class="space-y-6">
+        <!-- Title Indonesian -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
             Title (Indonesian) <span class="text-red-500">*</span>
           </label>
           <input
             type="text"
-            name="title"
             x-model="formData.title"
             required
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter thesis title in Indonesian"
+            placeholder="Judul skripsi dalam Bahasa Indonesia"
           />
         </div>
 
-        <!-- Title (English) -->
-        <div class="md:col-span-2">
+        <!-- Title English -->
+        <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Title (English)
           </label>
           <input
             type="text"
-            name="titleEn"
             x-model="formData.titleEn"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter thesis title in English (optional)"
+            placeholder="Thesis title in English (optional)"
           />
         </div>
 
-        <!-- Author Name -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Author Name <span class="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="authorName"
-            x-model="formData.authorName"
-            required
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Full name"
-          />
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Author Name -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Author Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              x-model="formData.authorName"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Full name as on official documents"
+            />
+          </div>
 
-        <!-- Student ID -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Student ID (NIM) <span class="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="studentId"
-            x-model="formData.studentId"
-            required
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., 1234567890"
-          />
-        </div>
+          <!-- Student ID -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Student ID (NIM) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              x-model="formData.studentId"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., 1234567890"
+            />
+          </div>
 
-        <!-- Department -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Department <span class="text-red-500">*</span>
-          </label>
-          <select
-            name="departmentId"
-            x-model="formData.departmentId"
-            required
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Select department</option>
-            <% departments.forEach(dept => { %>
-              <option value="<%= dept.id %>"><%= dept.name %> - <%= dept.faculty.name %></option>
-            <% }); %>
-          </select>
-        </div>
+          <!-- Department -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Department <span class="text-red-500">*</span>
+            </label>
+            <select
+              x-model="formData.departmentId"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select department</option>
+              <% departments.forEach(dept => { %>
+                <option value="<%= dept.id %>"><%= dept.name %> - <%= dept.faculty.name %></option>
+              <% }); %>
+            </select>
+          </div>
 
-        <!-- Graduation Year -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Graduation Year <span class="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            name="graduationYear"
-            x-model="formData.graduationYear"
-            required
-            min="2000"
-            max="2100"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., 2024"
-          />
+          <!-- Graduation Year -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Graduation Year <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              x-model="formData.graduationYear"
+              required
+              min="2000"
+              max="2100"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., 2024"
+            />
+          </div>
         </div>
 
         <!-- Defense Date -->
-        <div class="md:col-span-2">
+        <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Defense Date (Tanggal Sidang)
           </label>
           <input
             type="date"
-            name="defenseDate"
             x-model="formData.defenseDate"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -215,69 +154,64 @@
       </div>
     </div>
 
-    <!-- Section 2: Abstract & Keywords -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-semibold text-gray-900">
-          <i data-lucide="align-left" class="w-5 h-5 inline mr-2"></i>
-          Abstract & Keywords
-        </h2>
-      </div>
+    <!-- STEP 2: Abstract & Keywords -->
+    <div x-show="currentStep === 1" x-transition class="bg-white rounded-xl shadow-sm p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        <i data-lucide="align-left" class="w-6 h-6 inline mr-2"></i>
+        Abstract & Keywords
+      </h2>
 
       <div class="space-y-6">
-        <!-- Abstract (Indonesian) -->
+        <!-- Abstract Indonesian -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
             Abstract (Indonesian) <span class="text-red-500">*</span>
           </label>
           <textarea
-            name="abstractId"
             x-model="formData.abstractId"
             required
-            rows="6"
+            rows="8"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter abstract in Indonesian (max 500 words)"
+            placeholder="Write your abstract in Indonesian (max 500 words)"
           ></textarea>
+          <p class="text-xs text-gray-500 mt-1">Maximum 500 words</p>
         </div>
 
-        <!-- Abstract (English) -->
+        <!-- Abstract English -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Abstract (English)
           </label>
           <textarea
-            name="abstractEn"
             x-model="formData.abstractEn"
-            rows="6"
+            rows="8"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter abstract in English (optional)"
+            placeholder="Write your abstract in English (optional)"
           ></textarea>
         </div>
 
-        <!-- Keywords (Indonesian) -->
+        <!-- Keywords Indonesian -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
             Keywords (Indonesian) <span class="text-red-500">*</span>
           </label>
           <input
             type="text"
-            name="keywords"
             x-model="formData.keywords"
             required
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Separate keywords with commas (e.g., machine learning, data mining)"
+            placeholder="e.g., machine learning, data mining, artificial intelligence"
           />
-          <p class="text-xs text-gray-500 mt-1">Use commas to separate keywords</p>
+          <p class="text-xs text-gray-500 mt-1">Separate keywords with commas</p>
         </div>
 
-        <!-- Keywords (English) -->
+        <!-- Keywords English -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Keywords (English)
           </label>
           <input
             type="text"
-            name="keywordsEn"
             x-model="formData.keywordsEn"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Separate keywords with commas (optional)"
@@ -286,29 +220,26 @@
       </div>
     </div>
 
-    <!-- Section 3: Advisors & Examiners -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-semibold text-gray-900">
-          <i data-lucide="users" class="w-5 h-5 inline mr-2"></i>
-          Advisors & Examiners
-        </h2>
-      </div>
+    <!-- STEP 3: Advisors & Examiners -->
+    <div x-show="currentStep === 2" x-transition class="bg-white rounded-xl shadow-sm p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        <i data-lucide="users" class="w-6 h-6 inline mr-2"></i>
+        Advisors & Examiners
+      </h2>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="space-y-6">
         <!-- Advisor 1 -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
             Main Advisor (Pembimbing Utama) <span class="text-red-500">*</span>
           </label>
           <select
-            name="advisor1Id"
             x-model="formData.advisor1Id"
-            @change="checkDuplicates"
+            @change="checkDuplicateLecturers"
             required
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">Select advisor</option>
+            <option value="">Select main advisor</option>
             <% lecturers.forEach(lecturer => { %>
               <option value="<%= lecturer.id %>"><%= lecturer.name %> - <%= lecturer.department.name %></option>
             <% }); %>
@@ -321,12 +252,11 @@
             Co-Advisor (Pembimbing Pendamping)
           </label>
           <select
-            name="advisor2Id"
             x-model="formData.advisor2Id"
-            @change="checkDuplicates"
+            @change="checkDuplicateLecturers"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">None</option>
+            <option value="">None (optional)</option>
             <% lecturers.forEach(lecturer => { %>
               <option value="<%= lecturer.id %>"><%= lecturer.name %> - <%= lecturer.department.name %></option>
             <% }); %>
@@ -335,111 +265,309 @@
 
         <!-- Examiner 1 -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
             Examiner 1 (Penguji 1) <span class="text-red-500">*</span>
           </label>
           <select
-            name="examiner1Id"
             x-model="formData.examiner1Id"
-            @change="checkDuplicates"
+            @change="checkDuplicateLecturers"
             required
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">Select examiner</option>
+            <option value="">Select examiner 1</option>
             <% lecturers.forEach(lecturer => { %>
               <option value="<%= lecturer.id %>"><%= lecturer.name %> - <%= lecturer.department.name %></option>
             <% }); %>
           </select>
         </div>
 
-        <!-- Examiner 2 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Examiner 2 (Penguji 2)
-          </label>
-          <select
-            name="examiner2Id"
-            x-model="formData.examiner2Id"
-            @change="checkDuplicates"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">None</option>
-            <% lecturers.forEach(lecturer => { %>
-              <option value="<%= lecturer.id %>"><%= lecturer.name %> - <%= lecturer.department.name %></option>
-            <% }); %>
-          </select>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Examiner 2 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Examiner 2 (Penguji 2)
+            </label>
+            <select
+              x-model="formData.examiner2Id"
+              @change="checkDuplicateLecturers"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">None (optional)</option>
+              <% lecturers.forEach(lecturer => { %>
+                <option value="<%= lecturer.id %>"><%= lecturer.name %> - <%= lecturer.department.name %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <!-- Examiner 3 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Examiner 3 (Penguji 3)
+            </label>
+            <select
+              x-model="formData.examiner3Id"
+              @change="checkDuplicateLecturers"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">None (optional)</option>
+              <% lecturers.forEach(lecturer => { %>
+                <option value="<%= lecturer.id %>"><%= lecturer.name %> - <%= lecturer.department.name %></option>
+              <% }); %>
+            </select>
+          </div>
         </div>
 
-        <!-- Examiner 3 -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Examiner 3 (Penguji 3)
-          </label>
-          <select
-            name="examiner3Id"
-            x-model="formData.examiner3Id"
-            @change="checkDuplicates"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">None</option>
-            <% lecturers.forEach(lecturer => { %>
-              <option value="<%= lecturer.id %>"><%= lecturer.name %> - <%= lecturer.department.name %></option>
-            <% }); %>
-          </select>
+        <!-- Duplicate Warning -->
+        <div x-show="hasDuplicateLecturers" class="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+          <div class="flex items-start">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600 mr-3 mt-0.5"></i>
+            <div>
+              <p class="text-sm font-semibold text-red-800">Duplicate Selection Error</p>
+              <p class="text-sm text-red-700 mt-1">
+                The same lecturer cannot be selected multiple times. Please choose different lecturers for each role.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Duplicate Warning -->
-      <div x-show="hasDuplicates" class="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded">
-        <p class="text-sm text-red-800 font-medium">
-          <i data-lucide="alert-triangle" class="w-4 h-4 inline mr-1"></i>
-          Error: Same lecturer cannot be selected multiple times
+    <!-- STEP 4: File Uploads with Dropzone -->
+    <div x-show="currentStep === 3" x-transition class="bg-white rounded-xl shadow-sm p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        <i data-lucide="upload-cloud" class="w-6 h-6 inline mr-2"></i>
+        Upload Thesis Files
+      </h2>
+
+      <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+        <p class="text-sm text-blue-900">
+          <strong>Requirements:</strong> All files must be in PDF format. Required files are marked with *.
         </p>
       </div>
+
+      <div class="space-y-4">
+        <!-- File Upload Sections -->
+        <template x-for="fileType in fileTypes" :key="fileType.type">
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="font-semibold text-gray-900 flex items-center">
+                  <span x-text="fileType.label"></span>
+                  <span x-show="fileType.required" class="text-red-500 ml-1">*</span>
+                  <span
+                    x-show="!fileType.required"
+                    class="ml-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded"
+                  >
+                    Optional
+                  </span>
+                </h3>
+                <p class="text-xs text-gray-500 mt-1">
+                  Maximum size: <span x-text="fileType.maxSize"></span>
+                </p>
+              </div>
+              <template x-if="uploadedFiles[fileType.type]">
+                <i data-lucide="check-circle" class="w-6 h-6 text-green-500"></i>
+              </template>
+            </div>
+
+            <!-- Dropzone Area -->
+            <div
+              x-show="!uploadedFiles[fileType.type]"
+              :id="'dropzone-' + fileType.type"
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+            >
+              <i data-lucide="upload" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
+              <p class="text-sm text-gray-600">
+                Drop PDF file here or <span class="text-blue-600 font-medium">browse</span>
+              </p>
+            </div>
+
+            <!-- File Preview -->
+            <div x-show="uploadedFiles[fileType.type]" class="bg-gray-50 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <i data-lucide="file-text" class="w-8 h-8 text-red-500"></i>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900" x-text="uploadedFiles[fileType.type]?.filename"></p>
+                    <p class="text-xs text-gray-500" x-text="formatFileSize(uploadedFiles[fileType.type]?.size)"></p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  @click="removeFile(fileType.type)"
+                  class="text-red-600 hover:text-red-800 transition"
+                >
+                  <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Upload Progress -->
+      <div x-show="isUploading" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex items-center space-x-3">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-blue-900">Uploading file...</p>
+            <div class="mt-2 w-full bg-blue-200 rounded-full h-2">
+              <div
+                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                :style="`width: ${uploadProgress}%`"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="flex flex-wrap gap-4 justify-end">
+    <!-- STEP 5: Review & Submit -->
+    <div x-show="currentStep === 4" x-transition class="bg-white rounded-xl shadow-sm p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        <i data-lucide="check-square" class="w-6 h-6 inline mr-2"></i>
+        Review & Submit
+      </h2>
+
+      <!-- Validation Checklist -->
+      <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+        <h3 class="font-semibold text-gray-900 mb-3">Submission Checklist</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="flex items-center space-x-2">
+            <i :data-lucide="formData.title ? 'check-circle' : 'x-circle'"
+               :class="formData.title ? 'text-green-500' : 'text-red-500'"
+               class="w-4 h-4"></i>
+            <span class="text-sm" :class="formData.title ? 'text-gray-700' : 'text-red-600'">
+              Title provided
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <i :data-lucide="formData.authorName ? 'check-circle' : 'x-circle'"
+               :class="formData.authorName ? 'text-green-500' : 'text-red-500'"
+               class="w-4 h-4"></i>
+            <span class="text-sm" :class="formData.authorName ? 'text-gray-700' : 'text-red-600'">
+              Author information complete
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <i :data-lucide="formData.abstractId ? 'check-circle' : 'x-circle'"
+               :class="formData.abstractId ? 'text-green-500' : 'text-red-500'"
+               class="w-4 h-4"></i>
+            <span class="text-sm" :class="formData.abstractId ? 'text-gray-700' : 'text-red-600'">
+              Abstract provided
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <i :data-lucide="formData.advisor1Id ? 'check-circle' : 'x-circle'"
+               :class="formData.advisor1Id ? 'text-green-500' : 'text-red-500'"
+               class="w-4 h-4"></i>
+            <span class="text-sm" :class="formData.advisor1Id ? 'text-gray-700' : 'text-red-600'">
+              Main advisor selected
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <i :data-lucide="allRequiredFilesUploaded ? 'check-circle' : 'x-circle'"
+               :class="allRequiredFilesUploaded ? 'text-green-500' : 'text-red-500'"
+               class="w-4 h-4"></i>
+            <span class="text-sm" :class="allRequiredFilesUploaded ? 'text-gray-700' : 'text-red-600'">
+              All required files uploaded
+            </span>
+          </div>
+        </div>
+
+        <div x-show="!canSubmitFinal" class="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+          <p class="text-sm text-red-800 font-medium">
+            Please complete all required fields and upload all required files before submitting.
+          </p>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="space-y-4">
+        <div class="border-b border-gray-200 pb-4">
+          <h4 class="text-sm font-semibold text-gray-500 mb-2">THESIS INFORMATION</h4>
+          <p class="font-medium text-gray-900" x-text="formData.title || '(No title provided)'"></p>
+        </div>
+
+        <div class="border-b border-gray-200 pb-4">
+          <h4 class="text-sm font-semibold text-gray-500 mb-2">AUTHOR</h4>
+          <p class="text-gray-900">
+            <span x-text="formData.authorName || '(No name)'"></span>
+            <span class="text-gray-500 ml-2" x-text="formData.studentId ? '(' + formData.studentId + ')' : ''"></span>
+          </p>
+        </div>
+
+        <div class="border-b border-gray-200 pb-4">
+          <h4 class="text-sm font-semibold text-gray-500 mb-2">UPLOADED FILES</h4>
+          <p class="text-sm text-gray-600" x-text="Object.keys(uploadedFiles).length + ' file(s) uploaded'"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex justify-between items-center mt-6">
       <button
         type="button"
-        @click="saveDraft"
-        class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-medium"
+        @click="previousStep"
+        x-show="currentStep > 0"
+        class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
       >
-        <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
-        Save as Draft
+        <i data-lucide="chevron-left" class="w-4 h-4 inline mr-1"></i>
+        Previous
       </button>
 
-      <button
-        type="button"
-        @click="confirmSubmit"
-        :disabled="!canSubmit"
-        :class="canSubmit ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
-        class="px-6 py-3 text-white rounded-lg transition font-medium"
-      >
-        <i data-lucide="send" class="w-4 h-4 inline mr-2"></i>
-        Submit for Review
-      </button>
+      <div class="flex space-x-3 ml-auto">
+        <button
+          type="button"
+          @click="saveDraft"
+          x-show="currentStep < 4"
+          class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-medium"
+        >
+          <i data-lucide="save" class="w-4 h-4 inline mr-2"></i>
+          Save Draft
+        </button>
+
+        <button
+          type="button"
+          @click="nextStep"
+          x-show="currentStep < 4"
+          :disabled="!canProceed"
+          :class="canProceed ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
+          class="px-6 py-3 text-white rounded-lg transition font-medium"
+        >
+          Next
+          <i data-lucide="chevron-right" class="w-4 h-4 inline ml-1"></i>
+        </button>
+
+        <button
+          type="button"
+          @click="confirmSubmit"
+          x-show="currentStep === 4"
+          :disabled="!canSubmitFinal"
+          :class="canSubmitFinal ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'"
+          class="px-6 py-3 text-white rounded-lg transition font-medium"
+        >
+          <i data-lucide="send" class="w-4 h-4 inline mr-2"></i>
+          Submit for Review
+        </button>
+      </div>
     </div>
+
   </form>
 
   <!-- Confirmation Modal -->
   <div x-show="showConfirmModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
-      <!-- Overlay -->
-      <div @click="showConfirmModal = false" class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
-
-      <!-- Modal Content -->
+      <div @click="showConfirmModal = false" class="fixed inset-0 bg-black bg-opacity-50"></div>
       <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
         <div class="text-center">
           <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
             <i data-lucide="alert-triangle" class="w-8 h-8 text-yellow-600"></i>
           </div>
-
           <h3 class="text-lg font-semibold text-gray-900 mb-2">Confirm Submission</h3>
           <p class="text-sm text-gray-600 mb-6">
             Are you sure you want to submit your thesis for review? You won't be able to edit it after submission.
           </p>
-
           <div class="flex space-x-3">
             <button
               @click="showConfirmModal = false"
@@ -449,7 +577,7 @@
             </button>
             <button
               @click="submitForReview"
-              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+              class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
             >
               Yes, Submit
             </button>
@@ -461,53 +589,171 @@
 
 </div>
 
-<!-- Alpine.js Form Logic -->
+<!-- Dropzone CSS -->
+<link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" />
+
+<!-- Dropzone JS -->
+<script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+
+<!-- Alpine.js Multi-Step Form Logic -->
 <script>
-function submissionForm() {
+Dropzone.autoDiscover = false;
+
+function multiStepForm() {
   return {
+    currentStep: 0,
+    steps: [
+      { title: 'Basic Info', completed: false },
+      { title: 'Abstract', completed: false },
+      { title: 'Advisors', completed: false },
+      { title: 'Files', completed: false },
+      { title: 'Review', completed: false },
+    ],
     formData: {
-      title: '<%= submissionData.title || "" %>',
-      titleEn: '<%= submissionData.titleEn || "" %>',
-      authorName: '<%= submissionData.authorName || "" %>',
-      studentId: '<%= submissionData.studentId || "" %>',
-      departmentId: '<%= submissionData.departmentId || "" %>',
-      graduationYear: '<%= submissionData.graduationYear || "" %>',
-      defenseDate: '<%= submissionData.defenseDate || "" %>',
-      abstractId: '<%= submissionData.abstractId || "" %>',
-      abstractEn: '<%= submissionData.abstractEn || "" %>',
-      keywords: '<%= submissionData.keywords || "" %>',
-      keywordsEn: '<%= submissionData.keywordsEn || "" %>',
-      advisor1Id: '<%= submissionData.advisor1Id || "" %>',
-      advisor2Id: '<%= submissionData.advisor2Id || "" %>',
-      examiner1Id: '<%= submissionData.examiner1Id || "" %>',
-      examiner2Id: '<%= submissionData.examiner2Id || "" %>',
-      examiner3Id: '<%= submissionData.examiner3Id || "" %>',
+      title: '',
+      titleEn: '',
+      authorName: '',
+      studentId: '',
+      departmentId: '',
+      graduationYear: '',
+      defenseDate: '',
+      abstractId: '',
+      abstractEn: '',
+      keywords: '',
+      keywordsEn: '',
+      advisor1Id: '',
+      advisor2Id: '',
+      examiner1Id: '',
+      examiner2Id: '',
+      examiner3Id: '',
     },
-    hasDuplicates: false,
+    uploadedFiles: {},
+    fileTypes: [
+      { type: 'COVER', label: 'Cover', required: true, maxSize: '5MB' },
+      { type: 'CHAPTER_1', label: 'Chapter 1 (Introduction)', required: true, maxSize: '10MB' },
+      { type: 'CHAPTER_2', label: 'Chapter 2 (Literature Review)', required: true, maxSize: '10MB' },
+      { type: 'CHAPTER_3', label: 'Chapter 3 (Methodology)', required: true, maxSize: '10MB' },
+      { type: 'CHAPTER_4', label: 'Chapter 4 (Results & Discussion)', required: true, maxSize: '10MB' },
+      { type: 'CHAPTER_5', label: 'Chapter 5 (Conclusion)', required: true, maxSize: '10MB' },
+      { type: 'BIBLIOGRAPHY', label: 'Bibliography (Daftar Pustaka)', required: true, maxSize: '5MB' },
+      { type: 'APPENDIX', label: 'Appendix (Lampiran)', required: false, maxSize: '20MB' },
+      { type: 'OTHER', label: 'Other', required: false, maxSize: '10MB' },
+    ],
+    hasDuplicateLecturers: false,
     showConfirmModal: false,
+    isUploading: false,
+    uploadProgress: 0,
+    dropzones: {},
 
     init() {
       // Initialize Lucide icons
       if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+        setTimeout(() => lucide.createIcons(), 100);
       }
-      this.checkDuplicates();
+
+      // Initialize Dropzone for each file type
+      this.$nextTick(() => {
+        this.initializeDropzones();
+      });
     },
 
-    get completionPercentage() {
-      const validation = <%= JSON.stringify(validation.checks) %>;
-      const totalChecks = Object.keys(validation).length;
-      const completedChecks = Object.values(validation).filter(v => v === true).length;
-      return Math.round((completedChecks / totalChecks) * 100);
+    initializeDropzones() {
+      this.fileTypes.forEach(fileType => {
+        const element = document.getElementById('dropzone-' + fileType.type);
+        if (!element) return;
+
+        const maxSize = parseInt(fileType.maxSize) * 1024 * 1024; // Convert MB to bytes
+
+        const dropzone = new Dropzone(element, {
+          url: '/student/upload',
+          maxFiles: 1,
+          maxFilesize: maxSize / (1024 * 1024), // Dropzone expects MB
+          acceptedFiles: '.pdf,application/pdf',
+          addRemoveLinks: false,
+          autoProcessQueue: true,
+          headers: {
+            'X-File-Type': fileType.type
+          },
+          init: function() {
+            this.on('sending', (file, xhr, formData) => {
+              formData.append('fileType', fileType.type);
+            });
+          }
+        });
+
+        dropzone.on('uploadprogress', (file, progress) => {
+          this.isUploading = true;
+          this.uploadProgress = progress;
+        });
+
+        dropzone.on('success', (file, response) => {
+          this.isUploading = false;
+          this.uploadProgress = 0;
+          if (response.success) {
+            this.uploadedFiles[fileType.type] = response.file;
+            dropzone.removeFile(file);
+            this.$nextTick(() => lucide.createIcons());
+          }
+        });
+
+        dropzone.on('error', (file, errorMessage) => {
+          this.isUploading = false;
+          this.uploadProgress = 0;
+          alert('Upload failed: ' + (errorMessage.message || errorMessage));
+          dropzone.removeFile(file);
+        });
+
+        this.dropzones[fileType.type] = dropzone;
+      });
     },
 
-    get canSubmit() {
-      const validation = <%= JSON.stringify(validation) %>;
-      return validation.isValid && !this.hasDuplicates;
+    get canProceed() {
+      switch(this.currentStep) {
+        case 0: // Basic Info
+          return this.formData.title && this.formData.authorName && this.formData.studentId &&
+                 this.formData.departmentId && this.formData.graduationYear;
+        case 1: // Abstract
+          return this.formData.abstractId && this.formData.keywords;
+        case 2: // Advisors
+          return this.formData.advisor1Id && this.formData.examiner1Id && !this.hasDuplicateLecturers;
+        case 3: // Files
+          return this.allRequiredFilesUploaded;
+        default:
+          return true;
+      }
     },
 
-    checkDuplicates() {
-      const selectedIds = [
+    get allRequiredFilesUploaded() {
+      const requiredTypes = this.fileTypes.filter(ft => ft.required).map(ft => ft.type);
+      return requiredTypes.every(type => this.uploadedFiles[type]);
+    },
+
+    get canSubmitFinal() {
+      return this.formData.title && this.formData.authorName && this.formData.studentId &&
+             this.formData.departmentId && this.formData.graduationYear &&
+             this.formData.abstractId && this.formData.keywords &&
+             this.formData.advisor1Id && this.formData.examiner1Id &&
+             !this.hasDuplicateLecturers && this.allRequiredFilesUploaded;
+    },
+
+    nextStep() {
+      if (this.canProceed && this.currentStep < 4) {
+        this.currentStep++;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.$nextTick(() => lucide.createIcons());
+      }
+    },
+
+    previousStep() {
+      if (this.currentStep > 0) {
+        this.currentStep--;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.$nextTick(() => lucide.createIcons());
+      }
+    },
+
+    checkDuplicateLecturers() {
+      const selected = [
         this.formData.advisor1Id,
         this.formData.advisor2Id,
         this.formData.examiner1Id,
@@ -515,18 +761,46 @@ function submissionForm() {
         this.formData.examiner3Id,
       ].filter(id => id !== '' && id !== null);
 
-      const uniqueIds = new Set(selectedIds);
-      this.hasDuplicates = selectedIds.length !== uniqueIds.size;
+      const unique = new Set(selected);
+      this.hasDuplicateLecturers = selected.length !== unique.size;
+    },
+
+    removeFile(fileType) {
+      if (confirm('Are you sure you want to remove this file?')) {
+        fetch(`/student/upload/${fileType}`, {
+          method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            delete this.uploadedFiles[fileType];
+            this.$nextTick(() => lucide.createIcons());
+          }
+        })
+        .catch(error => {
+          console.error('Error removing file:', error);
+          alert('Failed to remove file');
+        });
+      }
+    },
+
+    formatFileSize(bytes) {
+      if (!bytes) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     },
 
     saveDraft() {
       const form = document.getElementById('submissionForm');
       form.action = '/student/submit/draft';
+      form.method = 'POST';
       form.submit();
     },
 
     confirmSubmit() {
-      if (!this.canSubmit) {
+      if (!this.canSubmitFinal) {
         alert('Please complete all required fields before submitting.');
         return;
       }
@@ -536,12 +810,12 @@ function submissionForm() {
     submitForReview() {
       const form = document.getElementById('submissionForm');
       form.action = '/student/submit';
+      form.method = 'POST';
       form.submit();
     },
 
     handleSubmit(e) {
       e.preventDefault();
-      // Default form submission is prevented, use buttons instead
     }
   }
 }
