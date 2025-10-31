@@ -25,4 +25,10 @@ router.get('/browse/faculties/:id', browseController.facultyDetail);
 // GET /browse/departments/:id - Department detail with theses
 router.get('/browse/departments/:id', browseController.departmentDetail);
 
+// GET /browse/years - Browse all years
+router.get('/browse/years', browseController.browseYears);
+
+// GET /browse/years/:year - Year detail with theses
+router.get('/browse/years/:year', browseController.yearDetail);
+
 module.exports = router;

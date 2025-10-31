@@ -261,8 +261,193 @@ const departmentDetail = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /browse/years - Browse all years
+ */
+const browseYears = async (req, res, next) => {
+  try {
+    // Get years with thesis counts
+    const years = await prisma.thesis.groupBy({
+      by: ['graduationYear'],
+      where: { status: 'APPROVED' },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        graduationYear: 'desc',
+      },
+    });
+
+    // Format years with counts
+    const yearsWithStats = years.map(year => ({
+      year: year.graduationYear,
+      thesisCount: year._count.id,
+    }));
+
+    res.render('public/browse-years', {
+      title: 'Browse by Year',
+      layout: 'layouts/main',
+      years: yearsWithStats,
+      user: req.user || null,
+    });
+  } catch (error) {
+    console.error('Error loading years:', error);
+    next(error);
+  }
+};
+
+/**
+ * GET /browse/years/:year - Year detail with theses
+ */
+const yearDetail = async (req, res, next) => {
+  try {
+    const year = parseInt(req.params.year);
+    const {
+      faculty: facultyId,
+      department: departmentId,
+      sort = 'title',
+      page = 1,
+    } = req.query;
+
+    const limit = 20;
+    const offset = (parseInt(page) - 1) * limit;
+
+    // Build where clause
+    const whereClause = {
+      status: 'APPROVED',
+      graduationYear: year,
+    };
+
+    // Add faculty filter (via department)
+    if (facultyId) {
+      whereClause.department = {
+        facultyId: parseInt(facultyId),
+      };
+    }
+
+    // Add department filter
+    if (departmentId) {
+      whereClause.departmentId = parseInt(departmentId);
+    }
+
+    // Determine sort order
+    let orderBy = {};
+    switch (sort) {
+      case 'popular':
+        orderBy = { viewCount: 'desc' };
+        break;
+      case 'author':
+        orderBy = { submitter: { name: 'asc' } };
+        break;
+      case 'title':
+      default:
+        orderBy = { title: 'asc' };
+    }
+
+    // Get total count
+    const totalCount = await prisma.thesis.count({
+      where: whereClause,
+    });
+
+    // Get theses
+    const theses = await prisma.thesis.findMany({
+      where: whereClause,
+      orderBy,
+      take: limit,
+      skip: offset,
+      include: {
+        department: {
+          include: {
+            faculty: true,
+          },
+        },
+        submitter: {
+          select: {
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            files: true,
+          },
+        },
+      },
+    });
+
+    // Get all faculties for filter
+    const faculties = await prisma.faculty.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        departments: {
+          orderBy: { name: 'asc' },
+        },
+      },
+    });
+
+    // Get statistics by faculty for this year
+    const facultyStats = await prisma.thesis.groupBy({
+      by: ['departmentId'],
+      where: {
+        status: 'APPROVED',
+        graduationYear: year,
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Map department IDs to faculties
+    const statsByFaculty = {};
+    for (const stat of facultyStats) {
+      const dept = await prisma.department.findUnique({
+        where: { id: stat.departmentId },
+        include: { faculty: true },
+      });
+      if (dept) {
+        const facultyName = dept.faculty.name;
+        if (!statsByFaculty[facultyName]) {
+          statsByFaculty[facultyName] = 0;
+        }
+        statsByFaculty[facultyName] += stat._count.id;
+      }
+    }
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limit);
+    const currentPage = parseInt(page);
+    const hasNextPage = currentPage < totalPages;
+    const hasPrevPage = currentPage > 1;
+
+    res.render('public/year-detail', {
+      title: `Theses from ${year}`,
+      layout: 'layouts/main',
+      year,
+      theses,
+      totalCount,
+      currentPage,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      limit,
+      filters: {
+        facultyId: facultyId ? parseInt(facultyId) : null,
+        departmentId: departmentId ? parseInt(departmentId) : null,
+        sort,
+      },
+      faculties,
+      facultyStats: statsByFaculty,
+      user: req.user || null,
+    });
+  } catch (error) {
+    console.error('Error loading year detail:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   browseFaculties,
   facultyDetail,
   departmentDetail,
+  browseYears,
+  yearDetail,
 };
