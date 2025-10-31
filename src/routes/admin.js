@@ -5,6 +5,7 @@ const adminController = require('../controllers/adminController');
 const facultyController = require('../controllers/facultyController');
 const departmentController = require('../controllers/departmentController');
 const lecturerController = require('../controllers/lecturerController');
+const userController = require('../controllers/userController');
 
 /**
  * GET /admin/dashboard
@@ -74,5 +75,23 @@ router.post('/lecturers/:id/update', requireAdmin, lecturerController.update);
 
 // Delete lecturer
 router.post('/lecturers/:id/delete', requireAdmin, lecturerController.destroy);
+
+/**
+ * User Routes
+ */
+// List all users
+router.get('/users', requireAdmin, userController.index);
+
+// Show create form
+router.get('/users/create', requireAdmin, userController.create);
+
+// Store new user (student)
+router.post('/users', requireAdmin, userController.store);
+
+// Reset user password
+router.post('/users/:id/reset-password', requireAdmin, userController.resetPassword);
+
+// Toggle user status (activate/deactivate)
+router.post('/users/:id/toggle-status', requireAdmin, userController.toggleStatus);
 
 module.exports = router;

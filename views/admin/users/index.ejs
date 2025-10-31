@@ -1,0 +1,482 @@
+<!-- User Management Page -->
+<div class="space-y-6" x-data="userManager()">
+
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        <i class="fas fa-users text-blue-600 mr-3"></i>Manage Users
+      </h1>
+      <p class="text-gray-600 mt-1">Manage user accounts and permissions</p>
+    </div>
+    <a href="/admin/users/create" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-md hover:shadow-lg">
+      <i class="fas fa-user-plus mr-2"></i>Create Student Account
+    </a>
+  </div>
+
+  <!-- Role Filter Tabs -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex space-x-2">
+        <a href="/admin/users" class="px-4 py-2 rounded-lg font-medium transition <%= currentFilter === 'all' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100' %>">
+          <i class="fas fa-users mr-2"></i>All Users (<%= totalUsers %>)
+        </a>
+        <a href="/admin/users?role=ADMIN" class="px-4 py-2 rounded-lg font-medium transition <%= currentFilter === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-100' %>">
+          <i class="fas fa-user-shield mr-2"></i>Admins (<%= totalAdmins %>)
+        </a>
+        <a href="/admin/users?role=STUDENT" class="px-4 py-2 rounded-lg font-medium transition <%= currentFilter === 'STUDENT' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100' %>">
+          <i class="fas fa-user-graduate mr-2"></i>Students (<%= totalStudents %>)
+        </a>
+      </div>
+
+      <!-- Search -->
+      <div class="flex-1 max-w-md ml-4">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input
+            type="text"
+            x-model="searchQuery"
+            placeholder="Search users..."
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <% if (users && users.length > 0) { %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                User
+              </th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Role
+              </th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Status
+              </th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Last Login
+              </th>
+              <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <template x-for="user in filteredUsers" :key="user.id">
+              <tr class="hover:bg-gray-50 transition">
+                <!-- User Info -->
+                <td class="px-6 py-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                         :class="user.role === 'ADMIN' ? 'bg-purple-100' : 'bg-green-100'">
+                      <i class="fas"
+                         :class="user.role === 'ADMIN' ? 'fa-user-shield text-purple-600' : 'fa-user-graduate text-green-600'"></i>
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900" x-text="user.username"></div>
+                      <div class="text-xs text-gray-500" x-text="user.name || 'No name'"></div>
+                      <template x-if="user.email">
+                        <div class="text-xs text-gray-400">
+                          <i class="fas fa-envelope mr-1"></i><span x-text="user.email"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Role -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        :class="user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'"
+                        x-text="user.role">
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        :class="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    <i class="fas mr-1" :class="user.isActive ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                    <span x-text="user.isActive ? 'Active' : 'Inactive'"></span>
+                  </span>
+                </td>
+
+                <!-- Last Login -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <template x-if="user.lastLogin">
+                    <span x-text="formatDate(user.lastLogin)"></span>
+                  </template>
+                  <template x-if="!user.lastLogin">
+                    <span class="text-gray-400">Never</span>
+                  </template>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                  <button
+                    @click="confirmResetPassword(user)"
+                    class="inline-flex items-center px-3 py-1 border border-orange-300 text-orange-700 rounded-md hover:bg-orange-50 transition">
+                    <i class="fas fa-key mr-1"></i>Reset Password
+                  </button>
+                  <button
+                    @click="confirmToggleStatus(user)"
+                    :disabled="user.id === currentUserId"
+                    class="inline-flex items-center px-3 py-1 border rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    :class="user.isActive ? 'border-red-300 text-red-700 hover:bg-red-50' : 'border-green-300 text-green-700 hover:bg-green-50'">
+                    <i class="fas mr-1" :class="user.isActive ? 'fa-ban' : 'fa-check'"></i>
+                    <span x-text="user.isActive ? 'Deactivate' : 'Activate'"></span>
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty Search Results -->
+      <div x-show="filteredUsers.length === 0 && searchQuery !== ''" class="text-center py-12">
+        <i class="fas fa-search text-gray-300 text-5xl mb-4"></i>
+        <p class="text-gray-500 text-lg mb-2">No users found</p>
+        <button @click="searchQuery = ''" class="mt-4 text-blue-600 hover:text-blue-800 font-medium text-sm">
+          Clear Search
+        </button>
+      </div>
+
+    <% } else { %>
+      <!-- Empty State -->
+      <div class="text-center py-16">
+        <i class="fas fa-users text-gray-300 text-6xl mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Users Yet</h3>
+        <p class="text-gray-500 mb-6">Get started by creating your first student account</p>
+        <a href="/admin/users/create" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
+          <i class="fas fa-user-plus mr-2"></i>Create First Student
+        </a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Credentials Modal (After Create/Reset) -->
+  <div
+    x-show="showCredentialsModal"
+    x-cloak
+    class="fixed inset-0 z-50 overflow-y-auto"
+    style="display: none;"
+  >
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Background overlay -->
+      <div
+        x-show="showCredentialsModal"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+      ></div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <!-- Modal panel -->
+      <div
+        x-show="showCredentialsModal"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+              <i class="fas fa-check text-green-600"></i>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Account Credentials
+              </h3>
+              <div class="mt-4">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                  <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 mr-2 mt-0.5"></i>
+                    <p class="text-sm text-yellow-700 font-medium">
+                      Important: Save these credentials! They won't be shown again.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">USERNAME</label>
+                    <div class="flex items-center justify-between">
+                      <code class="text-sm font-mono text-gray-900" x-text="credentials.username"></code>
+                      <button @click="copyToClipboard(credentials.username)" class="text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">PASSWORD</label>
+                    <div class="flex items-center justify-between">
+                      <code class="text-lg font-mono font-bold text-blue-600" x-text="credentials.password"></code>
+                      <button @click="copyToClipboard(credentials.password)" class="text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <template x-if="credentials.name">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">NAME</label>
+                      <div class="text-sm text-gray-900" x-text="credentials.name"></div>
+                    </div>
+                  </template>
+                </div>
+
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p class="text-xs text-blue-700">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Please share these credentials securely with the student. They can change their password after first login.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button
+            type="button"
+            @click="closeCredentialsModal()"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+          >
+            <i class="fas fa-check mr-2"></i>I've Saved the Credentials
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Password Confirmation Modal -->
+  <div
+    x-show="showResetModal"
+    x-cloak
+    class="fixed inset-0 z-50 overflow-y-auto"
+    style="display: none;"
+  >
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div
+        x-show="showResetModal"
+        x-transition
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        @click="showResetModal = false"
+      ></div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <div
+        x-show="showResetModal"
+        x-transition
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 sm:mx-0 sm:h-10 sm:w-10">
+              <i class="fas fa-key text-orange-600"></i>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Reset Password
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  Are you sure you want to reset the password for <strong x-text="userToReset?.username"></strong>?
+                  A new random password will be generated.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <form :action="`/admin/users/${userToReset?.id}/reset-password`" method="POST" class="inline">
+            <button
+              type="submit"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-orange-600 text-base font-medium text-white hover:bg-orange-700 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              <i class="fas fa-key mr-2"></i>Reset Password
+            </button>
+          </form>
+          <button
+            type="button"
+            @click="showResetModal = false"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle Status Confirmation Modal -->
+  <div
+    x-show="showToggleModal"
+    x-cloak
+    class="fixed inset-0 z-50 overflow-y-auto"
+    style="display: none;"
+  >
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div
+        x-show="showToggleModal"
+        x-transition
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        @click="showToggleModal = false"
+      ></div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+      <div
+        x-show="showToggleModal"
+        x-transition
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10"
+                 :class="userToToggle?.isActive ? 'bg-red-100' : 'bg-green-100'">
+              <i class="fas" :class="userToToggle?.isActive ? 'fa-ban text-red-600' : 'fa-check text-green-600'"></i>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" x-text="userToToggle?.isActive ? 'Deactivate User' : 'Activate User'">
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  Are you sure you want to <strong x-text="userToToggle?.isActive ? 'deactivate' : 'activate'"></strong>
+                  user <strong x-text="userToToggle?.username"></strong>?
+                </p>
+                <template x-if="userToToggle?.isActive">
+                  <p class="text-sm text-red-600 mt-2">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>This user will not be able to log in.
+                  </p>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <form :action="`/admin/users/${userToToggle?.id}/toggle-status`" method="POST" class="inline">
+            <button
+              type="submit"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white sm:ml-3 sm:w-auto sm:text-sm"
+              :class="userToToggle?.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+            >
+              <i class="fas mr-2" :class="userToToggle?.isActive ? 'fa-ban' : 'fa-check'"></i>
+              <span x-text="userToToggle?.isActive ? 'Deactivate' : 'Activate'"></span>
+            </button>
+          </form>
+          <button
+            type="button"
+            @click="showToggleModal = false"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Alpine.js Component -->
+<script>
+  function userManager() {
+    return {
+      users: <%= JSON.stringify(users) %>,
+      searchQuery: '',
+      showCredentialsModal: false,
+      showResetModal: false,
+      showToggleModal: false,
+      credentials: {},
+      userToReset: null,
+      userToToggle: null,
+      currentUserId: <%= user.id %>,
+
+      init() {
+        // Check if we should show credentials modal
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('showCredentials') === 'true') {
+          <% if (typeof newUserCredentials !== 'undefined' && newUserCredentials) { %>
+            this.credentials = <%= JSON.stringify(newUserCredentials) %>;
+            this.showCredentialsModal = true;
+          <% } %>
+        } else if (urlParams.get('showResetCredentials') === 'true') {
+          <% if (typeof resetPasswordCredentials !== 'undefined' && resetPasswordCredentials) { %>
+            this.credentials = <%= JSON.stringify(resetPasswordCredentials) %>;
+            this.showCredentialsModal = true;
+          <% } %>
+        }
+      },
+
+      get filteredUsers() {
+        if (!this.searchQuery.trim()) {
+          return this.users;
+        }
+
+        const query = this.searchQuery.toLowerCase();
+        return this.users.filter(user => {
+          const username = user.username?.toLowerCase() || '';
+          const name = user.name?.toLowerCase() || '';
+          const email = user.email?.toLowerCase() || '';
+
+          return username.includes(query) || name.includes(query) || email.includes(query);
+        });
+      },
+
+      formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      },
+
+      copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Copied to clipboard!');
+        });
+      },
+
+      closeCredentialsModal() {
+        this.showCredentialsModal = false;
+        // Clean up URL
+        window.history.replaceState({}, document.title, '/admin/users');
+      },
+
+      confirmResetPassword(user) {
+        this.userToReset = user;
+        this.showResetModal = true;
+      },
+
+      confirmToggleStatus(user) {
+        this.userToToggle = user;
+        this.showToggleModal = true;
+      }
+    }
+  }
+</script>
+
+<style>
+  [x-cloak] {
+    display: none !important;
+  }
+</style>
