@@ -24,4 +24,13 @@ router.get('/:thesisId/download/:fileId', reviewController.downloadFile);
 // GET /admin/review/:thesisId/preview/:fileId - Preview file (for modal)
 router.get('/:thesisId/preview/:fileId', reviewController.previewFile);
 
+// POST /admin/review/:id/approve - Approve and publish thesis
+router.post('/:id/approve', reviewController.approve);
+
+// POST /admin/review/:id/request-changes - Request changes from student
+router.post('/:id/request-changes', reviewController.requestChanges);
+
+// POST /admin/review/:id/reject - Reject thesis
+router.post('/:id/reject', reviewController.reject);
+
 module.exports = router;

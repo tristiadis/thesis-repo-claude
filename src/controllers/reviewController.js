@@ -451,6 +451,186 @@ const previewFile = async (req, res, next) => {
 };
 
 /**
+ * Approve Thesis - Publish to public
+ * POST /admin/review/:id/approve
+ */
+const approve = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.user.id;
+
+    // Use transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Get thesis and verify status
+      const thesis = await tx.thesis.findUnique({
+        where: { id: parseInt(id) },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          submitterId: true,
+        },
+      });
+
+      if (!thesis) {
+        throw new Error('Thesis not found');
+      }
+
+      if (thesis.status !== 'PENDING') {
+        throw new Error('Only pending theses can be approved');
+      }
+
+      // Update thesis status to APPROVED
+      const updatedThesis = await tx.thesis.update({
+        where: { id: parseInt(id) },
+        data: {
+          status: 'APPROVED',
+          publishedAt: new Date(),
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
+          reviewerNotes: null, // Clear any previous notes
+        },
+      });
+
+      return updatedThesis;
+    });
+
+    console.log(`Thesis approved: ${result.id} by admin ${req.user.username}`);
+
+    req.flash('success', 'Thesis approved and published successfully!');
+    res.redirect('/admin/review');
+  } catch (error) {
+    console.error('Error approving thesis:', error);
+    req.flash('error', error.message || 'Failed to approve thesis');
+    res.redirect(`/admin/review/${req.params.id}`);
+  }
+};
+
+/**
+ * Request Changes - Send thesis back to student for revision
+ * POST /admin/review/:id/request-changes
+ */
+const requestChanges = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reviewerNotes } = req.body;
+    const adminId = req.user.id;
+
+    // Validate reviewer notes
+    if (!reviewerNotes || reviewerNotes.trim().length < 50) {
+      req.flash('error', 'Please provide detailed notes (minimum 50 characters)');
+      return res.redirect(`/admin/review/${id}`);
+    }
+
+    // Use transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Get thesis and verify status
+      const thesis = await tx.thesis.findUnique({
+        where: { id: parseInt(id) },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          submitterId: true,
+        },
+      });
+
+      if (!thesis) {
+        throw new Error('Thesis not found');
+      }
+
+      if (thesis.status !== 'PENDING') {
+        throw new Error('Only pending theses can be sent back for changes');
+      }
+
+      // Update thesis status to DRAFT (student can edit and re-submit)
+      const updatedThesis = await tx.thesis.update({
+        where: { id: parseInt(id) },
+        data: {
+          status: 'DRAFT',
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
+          reviewerNotes: reviewerNotes.trim(),
+        },
+      });
+
+      return updatedThesis;
+    });
+
+    console.log(`Changes requested for thesis: ${result.id} by admin ${req.user.username}`);
+
+    req.flash('success', 'Changes requested. Student has been notified and can revise the submission.');
+    res.redirect('/admin/review');
+  } catch (error) {
+    console.error('Error requesting changes:', error);
+    req.flash('error', error.message || 'Failed to request changes');
+    res.redirect(`/admin/review/${req.params.id}`);
+  }
+};
+
+/**
+ * Reject Thesis - Permanently reject the submission
+ * POST /admin/review/:id/reject
+ */
+const reject = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+    const adminId = req.user.id;
+
+    // Validate rejection reason
+    if (!rejectionReason || rejectionReason.trim().length < 50) {
+      req.flash('error', 'Please provide a detailed rejection reason (minimum 50 characters)');
+      return res.redirect(`/admin/review/${id}`);
+    }
+
+    // Use transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Get thesis and verify status
+      const thesis = await tx.thesis.findUnique({
+        where: { id: parseInt(id) },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          submitterId: true,
+        },
+      });
+
+      if (!thesis) {
+        throw new Error('Thesis not found');
+      }
+
+      if (thesis.status !== 'PENDING') {
+        throw new Error('Only pending theses can be rejected');
+      }
+
+      // Update thesis status to REJECTED
+      const updatedThesis = await tx.thesis.update({
+        where: { id: parseInt(id) },
+        data: {
+          status: 'REJECTED',
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
+          reviewerNotes: rejectionReason.trim(),
+        },
+      });
+
+      return updatedThesis;
+    });
+
+    console.log(`Thesis rejected: ${result.id} by admin ${req.user.username}`);
+
+    req.flash('success', 'Thesis has been rejected.');
+    res.redirect('/admin/review');
+  } catch (error) {
+    console.error('Error rejecting thesis:', error);
+    req.flash('error', error.message || 'Failed to reject thesis');
+    res.redirect(`/admin/review/${req.params.id}`);
+  }
+};
+
+/**
  * Helper function to format file size
  */
 function formatFileSize(bytes) {
@@ -468,4 +648,7 @@ module.exports = {
   show,
   downloadFile,
   previewFile,
+  approve,
+  requestChanges,
+  reject,
 };
