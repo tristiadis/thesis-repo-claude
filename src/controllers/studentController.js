@@ -5,9 +5,14 @@
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
+const {
+  calculateChecksum,
+  moveFileToStorage,
+  validatePDF,
+  deleteFile: deleteFileUtil,
+} = require('../utils/fileHandler');
 
 /**
  * Student Dashboard
@@ -339,7 +344,7 @@ const submitThesis = async (req, res, next) => {
           const checksum = await calculateChecksum(file.path);
 
           // Move file from temp to permanent storage
-          const permanentPath = await moveFileToPermStorage(file.path, thesis.id, file.filename);
+          const permanentPath = await moveFileToStorage(file.path, thesis.id, file.type);
 
           await tx.thesisFile.create({
             data: {
@@ -472,28 +477,7 @@ function validateSubmissionData(data) {
 /**
  * Calculate file checksum (MD5)
  */
-async function calculateChecksum(filePath) {
-  const fileBuffer = await fs.readFile(filePath);
-  const hashSum = crypto.createHash('md5');
-  hashSum.update(fileBuffer);
-  return hashSum.digest('hex');
-}
-
-/**
- * Move file from temp to permanent storage
- */
-async function moveFileToPermStorage(tempPath, thesisId, filename) {
-  const uploadsDir = path.join(__dirname, '../../uploads/theses', thesisId.toString());
-
-  // Create directory if it doesn't exist
-  await fs.mkdir(uploadsDir, { recursive: true });
-
-  const permanentPath = path.join(uploadsDir, filename);
-  await fs.rename(tempPath, permanentPath);
-
-  // Return relative path for database
-  return path.join('theses', thesisId.toString(), filename);
-}
+// calculateChecksum and moveFileToStorage are now imported from fileHandler utility
 
 /**
  * Helper function to get status label
@@ -579,12 +563,25 @@ const uploadFile = async (req, res) => {
 
     if (!fileType || !validFileTypes.includes(fileType)) {
       // Delete uploaded file
-      await fs.unlink(file.path).catch(() => {});
+      await deleteFileUtil(file.path);
       return res.status(400).json({
         success: false,
         message: 'Invalid file type',
       });
     }
+
+    // Validate PDF content
+    const isPDF = await validatePDF(file.path);
+    if (!isPDF) {
+      await deleteFileUtil(file.path);
+      return res.status(400).json({
+        success: false,
+        message: 'File is not a valid PDF document',
+      });
+    }
+
+    // Calculate checksum for file integrity
+    const checksum = await calculateChecksum(file.path);
 
     // Initialize session uploaded files array if not exists
     if (!req.session.uploadedFiles) {
@@ -592,9 +589,14 @@ const uploadFile = async (req, res) => {
     }
 
     // Remove any existing file of the same type
-    req.session.uploadedFiles = req.session.uploadedFiles.filter(
-      (f) => f.type !== fileType
+    const existingFileIndex = req.session.uploadedFiles.findIndex(
+      (f) => f.type === fileType
     );
+    if (existingFileIndex !== -1) {
+      const existingFile = req.session.uploadedFiles[existingFileIndex];
+      await deleteFileUtil(existingFile.path);
+      req.session.uploadedFiles.splice(existingFileIndex, 1);
+    }
 
     // Add new file to session
     const fileData = {
@@ -604,6 +606,7 @@ const uploadFile = async (req, res) => {
       path: file.path,
       size: file.size,
       mimetype: file.mimetype,
+      checksum: checksum,
       uploadedAt: new Date().toISOString(),
     };
 
@@ -626,6 +629,7 @@ const uploadFile = async (req, res) => {
           type: fileType,
           filename: file.originalname,
           size: file.size,
+          checksum: checksum,
           uploadedAt: fileData.uploadedAt,
         },
       });
@@ -668,11 +672,7 @@ const deleteFile = async (req, res) => {
 
     // Get file info and delete from filesystem
     const file = req.session.uploadedFiles[fileIndex];
-    try {
-      await fs.unlink(file.path);
-    } catch (err) {
-      console.error('Error deleting file from filesystem:', err);
-    }
+    await deleteFileUtil(file.path);
 
     // Remove from session
     req.session.uploadedFiles.splice(fileIndex, 1);

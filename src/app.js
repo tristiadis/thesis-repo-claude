@@ -63,10 +63,12 @@ app.use(setLayoutDefaults);
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const studentRoutes = require('./routes/student');
+const uploadRoutes = require('./routes/upload');
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/student', studentRoutes);
+app.use('/upload', uploadRoutes);
 
 // Home route - Redirect to login
 app.get('/', (req, res) => {
