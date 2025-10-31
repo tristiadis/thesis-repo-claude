@@ -19,12 +19,25 @@ const studentController = require('../controllers/studentController');
 router.get('/dashboard', requireStudent, studentController.dashboard);
 
 // ============================================================================
-// THESIS SUBMISSION (To be implemented in P3.2)
+// THESIS SUBMISSION
 // ============================================================================
 
-// router.get('/submit', requireStudent, studentController.submitForm);
-// router.post('/submit', requireStudent, studentController.submitThesis);
-// router.get('/thesis/:id/edit', requireStudent, studentController.editForm);
-// router.post('/thesis/:id/update', requireStudent, studentController.updateThesis);
+/**
+ * GET /student/submit
+ * Show thesis submission form
+ */
+router.get('/submit', requireStudent, studentController.submitForm);
+
+/**
+ * POST /student/submit/draft
+ * Save thesis as draft
+ */
+router.post('/submit/draft', requireStudent, studentController.saveDraft);
+
+/**
+ * POST /student/submit
+ * Submit thesis for review
+ */
+router.post('/submit', requireStudent, studentController.submitThesis);
 
 module.exports = router;

@@ -5,6 +5,9 @@
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const crypto = require('crypto');
+const fs = require('fs').promises;
+const path = require('path');
 
 /**
  * Student Dashboard
@@ -87,6 +90,412 @@ const dashboard = async (req, res, next) => {
 };
 
 /**
+ * Show Submit Form (Step 5 - Review & Submit)
+ * Display all entered data for review before submission
+ */
+const submitForm = async (req, res, next) => {
+  try {
+    // Get submission data from session
+    const submissionData = req.session.submissionData || {};
+
+    // Check if student already has a pending or approved thesis
+    const existingThesis = await prisma.thesis.findFirst({
+      where: {
+        submitterId: req.user.id,
+        status: {
+          in: ['PENDING', 'APPROVED'],
+        },
+      },
+    });
+
+    if (existingThesis) {
+      req.flash('error', 'You already have a thesis that is pending or approved');
+      return res.redirect('/student/dashboard');
+    }
+
+    // Load departments for Step 1
+    const departments = await prisma.department.findMany({
+      include: {
+        faculty: true,
+      },
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    // Load lecturers for Step 3
+    const lecturers = await prisma.lecturer.findMany({
+      where: {
+        isActive: true,
+      },
+      include: {
+        department: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    // Validate all required data
+    const validation = validateSubmissionData(submissionData);
+
+    res.renderWithLayout(
+      'student/submit',
+      {
+        pageTitle: 'Submit Thesis',
+        pageSubtitle: 'Review and submit your thesis for approval',
+        submissionData,
+        departments,
+        lecturers,
+        validation,
+        user: req.user,
+        currentPath: req.path,
+      },
+      'student'
+    );
+  } catch (error) {
+    console.error('Error loading submit form:', error);
+    next(error);
+  }
+};
+
+/**
+ * Save as Draft
+ * Save thesis with DRAFT status
+ */
+const saveDraft = async (req, res, next) => {
+  try {
+    const studentId = req.user.id;
+    const data = req.body;
+
+    // Check if student already has a thesis
+    let existingThesis = await prisma.thesis.findFirst({
+      where: {
+        submitterId: studentId,
+      },
+    });
+
+    // Use Prisma transaction for data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      let thesis;
+
+      if (existingThesis && existingThesis.status === 'DRAFT') {
+        // Update existing draft
+        thesis = await tx.thesis.update({
+          where: { id: existingThesis.id },
+          data: {
+            title: data.title,
+            titleEn: data.titleEn || null,
+            authorName: data.authorName,
+            studentId: data.studentId,
+            departmentId: parseInt(data.departmentId),
+            graduationYear: parseInt(data.graduationYear),
+            defenseDate: data.defenseDate ? new Date(data.defenseDate) : null,
+            abstractId: data.abstractId,
+            abstractEn: data.abstractEn || null,
+            keywords: data.keywords,
+            keywordsEn: data.keywordsEn || null,
+            advisor1Id: parseInt(data.advisor1Id),
+            advisor2Id: data.advisor2Id ? parseInt(data.advisor2Id) : null,
+            examiner1Id: parseInt(data.examiner1Id),
+            examiner2Id: data.examiner2Id ? parseInt(data.examiner2Id) : null,
+            examiner3Id: data.examiner3Id ? parseInt(data.examiner3Id) : null,
+            status: 'DRAFT',
+          },
+        });
+      } else {
+        // Create new draft
+        thesis = await tx.thesis.create({
+          data: {
+            submitterId: studentId,
+            title: data.title,
+            titleEn: data.titleEn || null,
+            authorName: data.authorName,
+            studentId: data.studentId,
+            departmentId: parseInt(data.departmentId),
+            graduationYear: parseInt(data.graduationYear),
+            defenseDate: data.defenseDate ? new Date(data.defenseDate) : null,
+            abstractId: data.abstractId,
+            abstractEn: data.abstractEn || null,
+            keywords: data.keywords,
+            keywordsEn: data.keywordsEn || null,
+            advisor1Id: parseInt(data.advisor1Id),
+            advisor2Id: data.advisor2Id ? parseInt(data.advisor2Id) : null,
+            examiner1Id: parseInt(data.examiner1Id),
+            examiner2Id: data.examiner2Id ? parseInt(data.examiner2Id) : null,
+            examiner3Id: data.examiner3Id ? parseInt(data.examiner3Id) : null,
+            status: 'DRAFT',
+          },
+        });
+      }
+
+      // Handle file uploads if any
+      if (data.uploadedFiles && data.uploadedFiles.length > 0) {
+        // Delete existing files for this thesis
+        await tx.thesisFile.deleteMany({
+          where: { thesisId: thesis.id },
+        });
+
+        // Create file records
+        for (const file of data.uploadedFiles) {
+          const checksum = await calculateChecksum(file.path);
+
+          await tx.thesisFile.create({
+            data: {
+              thesisId: thesis.id,
+              fileType: file.type,
+              filename: file.filename,
+              originalFilename: file.originalname,
+              filePath: file.path,
+              fileSize: file.size,
+              mimeType: file.mimetype,
+              checksum: checksum,
+              accessLevel: 'PUBLIC',
+            },
+          });
+        }
+      }
+
+      return thesis;
+    });
+
+    // Clear session data
+    delete req.session.submissionData;
+
+    req.flash('success', 'Your thesis has been saved as a draft');
+    res.redirect('/student/dashboard');
+  } catch (error) {
+    console.error('Error saving draft:', error);
+    req.flash('error', 'Failed to save draft. Please try again.');
+    res.redirect('/student/submit');
+  }
+};
+
+/**
+ * Submit for Review
+ * Submit thesis with PENDING status
+ */
+const submitThesis = async (req, res, next) => {
+  try {
+    const studentId = req.user.id;
+    const data = req.body;
+
+    // Validate all required fields
+    const validation = validateSubmissionData(data);
+    if (!validation.isValid) {
+      req.flash('error', 'Please fill in all required fields and upload all required files');
+      return res.redirect('/student/submit');
+    }
+
+    // Check if student already has a pending or approved thesis
+    const existingThesis = await prisma.thesis.findFirst({
+      where: {
+        submitterId: studentId,
+        status: {
+          in: ['PENDING', 'APPROVED'],
+        },
+      },
+    });
+
+    if (existingThesis) {
+      req.flash('error', 'You already have a thesis that is pending or approved');
+      return res.redirect('/student/dashboard');
+    }
+
+    // Use Prisma transaction for data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Create thesis record
+      const thesis = await tx.thesis.create({
+        data: {
+          submitterId: studentId,
+          title: data.title,
+          titleEn: data.titleEn || null,
+          authorName: data.authorName,
+          studentId: data.studentId,
+          departmentId: parseInt(data.departmentId),
+          graduationYear: parseInt(data.graduationYear),
+          defenseDate: data.defenseDate ? new Date(data.defenseDate) : null,
+          abstractId: data.abstractId,
+          abstractEn: data.abstractEn || null,
+          keywords: data.keywords,
+          keywordsEn: data.keywordsEn || null,
+          advisor1Id: parseInt(data.advisor1Id),
+          advisor2Id: data.advisor2Id ? parseInt(data.advisor2Id) : null,
+          examiner1Id: parseInt(data.examiner1Id),
+          examiner2Id: data.examiner2Id ? parseInt(data.examiner2Id) : null,
+          examiner3Id: data.examiner3Id ? parseInt(data.examiner3Id) : null,
+          status: 'PENDING',
+          submittedAt: new Date(),
+        },
+      });
+
+      // Create file records
+      if (data.uploadedFiles && data.uploadedFiles.length > 0) {
+        for (const file of data.uploadedFiles) {
+          // Calculate checksum
+          const checksum = await calculateChecksum(file.path);
+
+          // Move file from temp to permanent storage
+          const permanentPath = await moveFileToPermStorage(file.path, thesis.id, file.filename);
+
+          await tx.thesisFile.create({
+            data: {
+              thesisId: thesis.id,
+              fileType: file.type,
+              filename: file.filename,
+              originalFilename: file.originalname,
+              filePath: permanentPath,
+              fileSize: file.size,
+              mimeType: file.mimetype,
+              checksum: checksum,
+              accessLevel: 'PUBLIC',
+            },
+          });
+        }
+      }
+
+      return thesis;
+    });
+
+    // Clear session data
+    delete req.session.submissionData;
+
+    req.flash('success', 'Your thesis has been submitted for review successfully!');
+    res.redirect('/student/dashboard');
+  } catch (error) {
+    console.error('Error submitting thesis:', error);
+    req.flash('error', 'Failed to submit thesis. Please try again.');
+    res.redirect('/student/submit');
+  }
+};
+
+/**
+ * Validate submission data
+ */
+function validateSubmissionData(data) {
+  const errors = [];
+  const checks = {
+    hasTitle: false,
+    hasAuthor: false,
+    hasStudentId: false,
+    hasDepartment: false,
+    hasGraduationYear: false,
+    hasAbstract: false,
+    hasKeywords: false,
+    hasAdvisor1: false,
+    hasExaminer1: false,
+    hasRequiredFiles: false,
+  };
+
+  // Check required fields
+  if (data.title && data.title.trim() !== '') {
+    checks.hasTitle = true;
+  } else {
+    errors.push('Title is required');
+  }
+
+  if (data.authorName && data.authorName.trim() !== '') {
+    checks.hasAuthor = true;
+  } else {
+    errors.push('Author name is required');
+  }
+
+  if (data.studentId && data.studentId.trim() !== '') {
+    checks.hasStudentId = true;
+  } else {
+    errors.push('Student ID is required');
+  }
+
+  if (data.departmentId) {
+    checks.hasDepartment = true;
+  } else {
+    errors.push('Department is required');
+  }
+
+  if (data.graduationYear) {
+    checks.hasGraduationYear = true;
+  } else {
+    errors.push('Graduation year is required');
+  }
+
+  if (data.abstractId && data.abstractId.trim() !== '') {
+    checks.hasAbstract = true;
+  } else {
+    errors.push('Abstract is required');
+  }
+
+  if (data.keywords && data.keywords.trim() !== '') {
+    checks.hasKeywords = true;
+  } else {
+    errors.push('Keywords are required');
+  }
+
+  if (data.advisor1Id) {
+    checks.hasAdvisor1 = true;
+  } else {
+    errors.push('Main advisor is required');
+  }
+
+  if (data.examiner1Id) {
+    checks.hasExaminer1 = true;
+  } else {
+    errors.push('At least one examiner is required');
+  }
+
+  // Check required files
+  const requiredFileTypes = ['COVER', 'CHAPTER_1', 'CHAPTER_2', 'CHAPTER_3', 'CHAPTER_4', 'CHAPTER_5', 'BIBLIOGRAPHY'];
+  if (data.uploadedFiles && data.uploadedFiles.length > 0) {
+    const uploadedTypes = data.uploadedFiles.map(f => f.type);
+    const missingFiles = requiredFileTypes.filter(type => !uploadedTypes.includes(type));
+
+    if (missingFiles.length === 0) {
+      checks.hasRequiredFiles = true;
+    } else {
+      errors.push(`Missing required files: ${missingFiles.join(', ')}`);
+    }
+  } else {
+    errors.push('All required files must be uploaded');
+  }
+
+  const isValid = Object.values(checks).every(check => check === true);
+
+  return {
+    isValid,
+    checks,
+    errors,
+  };
+}
+
+/**
+ * Calculate file checksum (MD5)
+ */
+async function calculateChecksum(filePath) {
+  const fileBuffer = await fs.readFile(filePath);
+  const hashSum = crypto.createHash('md5');
+  hashSum.update(fileBuffer);
+  return hashSum.digest('hex');
+}
+
+/**
+ * Move file from temp to permanent storage
+ */
+async function moveFileToPermStorage(tempPath, thesisId, filename) {
+  const uploadsDir = path.join(__dirname, '../../uploads/theses', thesisId.toString());
+
+  // Create directory if it doesn't exist
+  await fs.mkdir(uploadsDir, { recursive: true });
+
+  const permanentPath = path.join(uploadsDir, filename);
+  await fs.rename(tempPath, permanentPath);
+
+  // Return relative path for database
+  return path.join('theses', thesisId.toString(), filename);
+}
+
+/**
  * Helper function to get status label
  */
 function getStatusLabel(status) {
@@ -140,4 +549,7 @@ function getStatusMessage(status) {
 
 module.exports = {
   dashboard,
+  submitForm,
+  saveDraft,
+  submitThesis,
 };
