@@ -1,0 +1,107 @@
+<!-- Browse by Faculty Page -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Page Header -->
+  <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
+    <div class="container mx-auto px-4">
+      <!-- Breadcrumb -->
+      <div class="text-sm mb-4">
+        <a href="/" class="hover:text-blue-200 transition">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <span class="mx-2">/</span>
+        <span>Browse by Faculty</span>
+      </div>
+
+      <h1 class="text-4xl font-bold mb-4">Browse by Faculty</h1>
+      <p class="text-blue-100 text-lg">
+        Explore theses organized by academic faculties
+      </p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container mx-auto px-4 py-12">
+    <% if (faculties.length > 0) { %>
+      <!-- Faculty Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% faculties.forEach(faculty => { %>
+          <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+            <!-- Card Header -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <h3 class="text-xl font-bold mb-2"><%= faculty.name %></h3>
+                  <% if (faculty.code) { %>
+                    <p class="text-blue-100 text-sm">Code: <%= faculty.code %></p>
+                  <% } %>
+                </div>
+                <div class="ml-4">
+                  <i class="fas fa-university text-3xl text-blue-200"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-6">
+              <% if (faculty.description) { %>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                  <%= faculty.description %>
+                </p>
+              <% } %>
+
+              <!-- Statistics -->
+              <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                  <div class="text-2xl font-bold text-blue-600">
+                    <%= faculty.thesisCount.toLocaleString() %>
+                  </div>
+                  <div class="text-xs text-gray-600 mt-1">Theses</div>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                  <div class="text-2xl font-bold text-green-600">
+                    <%= faculty.departmentCount %>
+                  </div>
+                  <div class="text-xs text-gray-600 mt-1">Departments</div>
+                </div>
+              </div>
+
+              <!-- Action Button -->
+              <a
+                href="/browse/faculties/<%= faculty.id %>"
+                class="block w-full text-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                <i class="fas fa-arrow-right mr-2"></i>View Departments
+              </a>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- Summary -->
+      <div class="mt-12 text-center">
+        <p class="text-gray-600">
+          Showing <span class="font-bold text-gray-900"><%= faculties.length %></span>
+          <%= faculties.length === 1 ? 'faculty' : 'faculties' %>
+        </p>
+      </div>
+
+    <% } else { %>
+      <!-- Empty State -->
+      <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <div class="mb-6">
+          <i class="fas fa-university text-6xl text-gray-300"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-4">No Faculties Found</h3>
+        <p class="text-gray-600 mb-8">
+          There are currently no faculties available.
+        </p>
+        <a
+          href="/"
+          class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+        >
+          <i class="fas fa-home mr-2"></i>Return to Homepage
+        </a>
+      </div>
+    <% } %>
+  </div>
+</div>

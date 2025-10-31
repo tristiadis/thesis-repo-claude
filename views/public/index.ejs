@@ -68,7 +68,7 @@
           </div>
           <h3 class="text-xl font-semibold text-gray-900 mb-2">By Faculty</h3>
           <p class="text-gray-600 mb-4">Explore theses organized by academic faculty</p>
-          <a href="/browse/faculty" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+          <a href="/browse/faculties" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
             Browse Faculties
             <i class="fas fa-arrow-right ml-2"></i>
           </a>
@@ -107,7 +107,7 @@
           <h3 class="text-2xl font-bold text-gray-900 mb-6">Faculties</h3>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <% faculties.filter(f => f.thesisCount > 0).slice(0, 8).forEach(faculty => { %>
-              <a href="/browse/faculty/<%= faculty.id %>" class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-500 hover:shadow-md transition">
+              <a href="/browse/faculties/<%= faculty.id %>" class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-500 hover:shadow-md transition">
                 <div class="font-semibold text-gray-900 mb-1"><%= faculty.name %></div>
                 <div class="text-sm text-gray-500"><%= faculty.thesisCount %> theses</div>
               </a>
