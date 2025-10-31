@@ -2,160 +2,327 @@
 <div class="space-y-6">
 
   <!-- Welcome Header -->
-  <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
+  <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
     <h1 class="text-3xl font-bold mb-2">
-      <i class="fas fa-hand-wave mr-2"></i>Welcome, <%= user.name %>!
+      <i data-lucide="hand" class="inline-block w-8 h-8 mr-2"></i>Welcome, <%= user.name %>!
     </h1>
-    <p class="text-blue-100">Manage your thesis submissions and track their status</p>
+    <p class="text-blue-100">Manage your thesis submission and track its status</p>
   </div>
 
-  <!-- Statistics Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-    <!-- Total Submissions -->
-    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
-      <div class="flex items-center">
-        <div class="flex-shrink-0 w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-          <i class="fas fa-file-upload text-white text-xl"></i>
+  <% if (!hasThesis) { %>
+    <!-- CASE 1: No Thesis - Empty State -->
+    <div class="bg-white rounded-xl shadow-sm p-12">
+      <div class="text-center max-w-2xl mx-auto">
+        <!-- Empty State Illustration -->
+        <div class="mb-8">
+          <div class="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full">
+            <i data-lucide="book-open" class="w-16 h-16 text-blue-600"></i>
+          </div>
         </div>
-        <div class="ml-4 flex-1">
-          <p class="text-sm font-medium text-gray-500 mb-1">My Submissions</p>
-          <p class="text-2xl font-bold text-gray-900">
-            <%= typeof stats !== 'undefined' && stats.totalSubmissions ? stats.totalSubmissions : '-' %>
-          </p>
-        </div>
-      </div>
-    </div>
 
-    <!-- Approved -->
-    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
-      <div class="flex items-center">
-        <div class="flex-shrink-0 w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-          <i class="fas fa-check-circle text-white text-xl"></i>
-        </div>
-        <div class="ml-4 flex-1">
-          <p class="text-sm font-medium text-gray-500 mb-1">Approved</p>
-          <p class="text-2xl font-bold text-gray-900">
-            <%= typeof stats !== 'undefined' && stats.approvedSubmissions ? stats.approvedSubmissions : '-' %>
-          </p>
-        </div>
-      </div>
-    </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-3">
+          You Haven't Submitted Your Thesis Yet
+        </h2>
+        <p class="text-gray-600 mb-8 text-lg">
+          Start your thesis submission process to share your research with the academic community
+        </p>
 
-    <!-- Pending -->
-    <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
-      <div class="flex items-center">
-        <div class="flex-shrink-0 w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
-          <i class="fas fa-clock text-white text-xl"></i>
-        </div>
-        <div class="ml-4 flex-1">
-          <p class="text-sm font-medium text-gray-500 mb-1">Pending</p>
-          <p class="text-2xl font-bold text-gray-900">
-            <%= typeof stats !== 'undefined' && stats.pendingSubmissions ? stats.pendingSubmissions : '-' %>
-          </p>
-        </div>
-      </div>
-    </div>
+        <!-- Submit Button -->
+        <a
+          href="/student/submit"
+          class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <i data-lucide="upload" class="w-6 h-6 mr-3"></i>
+          Submit Thesis
+        </a>
 
-  </div>
-
-  <!-- Quick Actions -->
-  <div class="bg-white rounded-lg shadow-sm p-6">
-    <h2 class="text-xl font-semibold text-gray-900 mb-4">
-      <i class="fas fa-bolt text-yellow-500 mr-2"></i>Quick Actions
-    </h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <a href="/student/submit" class="group flex items-center justify-center space-x-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-md hover:shadow-lg">
-        <i class="fas fa-plus text-xl group-hover:scale-110 transition-transform"></i>
-        <span class="font-medium">Submit New Thesis</span>
-      </a>
-
-      <a href="/student/my-theses" class="group flex items-center justify-center space-x-3 px-6 py-4 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition border-2 border-blue-200 hover:border-blue-300">
-        <i class="fas fa-list text-xl group-hover:scale-110 transition-transform"></i>
-        <span class="font-medium">View My Theses</span>
-      </a>
-
-      <a href="/browse" class="group flex items-center justify-center space-x-3 px-6 py-4 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition border-2 border-gray-200 hover:border-gray-300">
-        <i class="fas fa-search text-xl group-hover:scale-110 transition-transform"></i>
-        <span class="font-medium">Browse Repository</span>
-      </a>
-    </div>
-  </div>
-
-  <!-- Recent Submissions -->
-  <div class="bg-white rounded-lg shadow-sm p-6">
-    <h2 class="text-xl font-semibold text-gray-900 mb-4">
-      <i class="fas fa-history text-gray-500 mr-2"></i>Recent Submissions
-    </h2>
-
-    <% if (typeof recentSubmissions !== 'undefined' && recentSubmissions.length > 0) { %>
-      <div class="space-y-3">
-        <% recentSubmissions.forEach(submission => { %>
-          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-            <div class="flex-1">
-              <h3 class="font-medium text-gray-900 mb-1"><%= submission.title %></h3>
-              <p class="text-sm text-gray-500">
-                <i class="fas fa-calendar mr-1"></i>
-                <%= submission.submittedAt %>
-              </p>
-            </div>
-            <div class="flex items-center space-x-3">
-              <% if (submission.status === 'APPROVED') { %>
-                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                  <i class="fas fa-check-circle mr-1"></i>Approved
-                </span>
-              <% } else if (submission.status === 'PENDING') { %>
-                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-                  <i class="fas fa-clock mr-1"></i>Pending
-                </span>
-              <% } else if (submission.status === 'REJECTED') { %>
-                <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-                  <i class="fas fa-times-circle mr-1"></i>Rejected
-                </span>
-              <% } else { %>
-                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
-                  <i class="fas fa-file mr-1"></i><%= submission.status %>
-                </span>
-              <% } %>
-              <a href="/student/thesis/<%= submission.id %>" class="text-blue-600 hover:text-blue-800 transition">
-                <i class="fas fa-arrow-right"></i>
-              </a>
+        <!-- Guidelines Info -->
+        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6 text-left">
+          <div class="flex items-start">
+            <i data-lucide="info" class="w-6 h-6 text-blue-600 mt-1 mr-3 flex-shrink-0"></i>
+            <div>
+              <h3 class="text-sm font-semibold text-blue-900 mb-2">Before You Submit</h3>
+              <ul class="text-sm text-blue-800 space-y-1">
+                <li>• Make sure all thesis documents are ready in PDF format</li>
+                <li>• Prepare your thesis metadata (title, abstract, keywords)</li>
+                <li>• Ensure you have your advisors and examiners information</li>
+                <li>• Review the submission guidelines for formatting requirements</li>
+              </ul>
             </div>
           </div>
-        <% }); %>
+        </div>
+      </div>
+    </div>
+
+  <% } else { %>
+    <!-- CASE 2: Has Thesis - Status Display -->
+
+    <!-- Status Card -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <!-- Status Header with Color Coding -->
+      <div class="px-8 py-6 border-b border-gray-200 bg-<%= statusInfo.color %>-50">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 bg-<%= statusInfo.color %>-100 rounded-full flex items-center justify-center">
+              <i data-lucide="<%= statusInfo.icon %>" class="w-8 h-8 text-<%= statusInfo.color %>-600"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 mb-1">Your Thesis</h2>
+              <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center px-4 py-1.5 bg-<%= statusInfo.color %>-500 text-white rounded-full text-sm font-semibold">
+                  <i data-lucide="<%= statusInfo.icon %>" class="w-4 h-4 mr-2"></i>
+                  <%= statusInfo.label %>
+                </span>
+                <span class="text-sm text-gray-600">
+                  <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                  Submitted <%= new Date(thesis.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="mt-4 text-center">
-        <a href="/student/my-theses" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
-          View All Submissions <i class="fas fa-arrow-right ml-1"></i>
-        </a>
+      <!-- Status Message -->
+      <div class="px-8 py-6 bg-<%= statusInfo.color %>-50 border-b border-<%= statusInfo.color %>-200">
+        <div class="flex items-start space-x-3">
+          <i data-lucide="<%= statusInfo.icon %>" class="w-5 h-5 text-<%= statusInfo.color %>-600 mt-0.5 flex-shrink-0"></i>
+          <p class="text-<%= statusInfo.color %>-900 text-sm leading-relaxed">
+            <%= statusInfo.message %>
+          </p>
+        </div>
       </div>
-    <% } else { %>
-      <div class="text-center py-8">
-        <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
-        <p class="text-gray-500 mb-4">You haven't submitted any theses yet</p>
-        <a href="/student/submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          <i class="fas fa-plus mr-2"></i>Submit Your First Thesis
-        </a>
+
+      <!-- Thesis Details -->
+      <div class="px-8 py-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6"><%= thesis.title %></h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Author Info -->
+          <div class="space-y-3">
+            <div class="flex items-start">
+              <i data-lucide="user" class="w-5 h-5 text-gray-400 mr-3 mt-0.5"></i>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Author</p>
+                <p class="text-sm font-medium text-gray-900"><%= thesis.authorName %></p>
+                <p class="text-xs text-gray-500"><%= thesis.studentId %></p>
+              </div>
+            </div>
+
+            <div class="flex items-start">
+              <i data-lucide="building-2" class="w-5 h-5 text-gray-400 mr-3 mt-0.5"></i>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Department</p>
+                <p class="text-sm font-medium text-gray-900"><%= thesis.department.name %></p>
+                <p class="text-xs text-gray-500"><%= thesis.department.faculty.name %></p>
+              </div>
+            </div>
+
+            <div class="flex items-start">
+              <i data-lucide="calendar" class="w-5 h-5 text-gray-400 mr-3 mt-0.5"></i>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Graduation Year</p>
+                <p class="text-sm font-medium text-gray-900"><%= thesis.graduationYear %></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Advisors & Examiners -->
+          <div class="space-y-3">
+            <div class="flex items-start">
+              <i data-lucide="user-check" class="w-5 h-5 text-gray-400 mr-3 mt-0.5"></i>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Advisor 1</p>
+                <p class="text-sm font-medium text-gray-900"><%= thesis.advisor1.name %></p>
+              </div>
+            </div>
+
+            <% if (thesis.advisor2) { %>
+            <div class="flex items-start">
+              <i data-lucide="user-check" class="w-5 h-5 text-gray-400 mr-3 mt-0.5"></i>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Advisor 2</p>
+                <p class="text-sm font-medium text-gray-900"><%= thesis.advisor2.name %></p>
+              </div>
+            </div>
+            <% } %>
+
+            <div class="flex items-start">
+              <i data-lucide="users" class="w-5 h-5 text-gray-400 mr-3 mt-0.5"></i>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Examiners</p>
+                <p class="text-sm font-medium text-gray-900"><%= thesis.examiner1.name %></p>
+                <% if (thesis.examiner2) { %>
+                  <p class="text-sm font-medium text-gray-900 mt-1"><%= thesis.examiner2.name %></p>
+                <% } %>
+                <% if (thesis.examiner3) { %>
+                  <p class="text-sm font-medium text-gray-900 mt-1"><%= thesis.examiner3.name %></p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Abstract -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Abstract</p>
+          <p class="text-sm text-gray-700 leading-relaxed"><%= thesis.abstractId %></p>
+        </div>
+
+        <!-- Keywords -->
+        <div class="mb-6">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Keywords</p>
+          <div class="flex flex-wrap gap-2">
+            <% thesis.keywords.split(',').forEach(keyword => { %>
+              <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                <%= keyword.trim() %>
+              </span>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Rejection Reason (if rejected) -->
+        <% if (statusInfo.showRejectionReason) { %>
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+          <div class="flex items-start">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0"></i>
+            <div>
+              <h4 class="text-sm font-semibold text-red-900 mb-2">Rejection Reason</h4>
+              <p class="text-sm text-red-800 leading-relaxed"><%= thesis.reviewerNotes %></p>
+              <p class="text-xs text-red-700 mt-3">
+                <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                Please contact the library staff for further assistance.
+              </p>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Timeline -->
+        <div class="mb-6">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-4">Submission Timeline</p>
+          <div class="relative">
+            <!-- Timeline Line -->
+            <div class="absolute left-4 top-6 bottom-6 w-0.5 bg-gray-200"></div>
+
+            <!-- Timeline Items -->
+            <div class="space-y-6 relative">
+              <!-- Submitted -->
+              <div class="flex items-start space-x-4">
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
+                  <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="pt-1">
+                  <p class="text-sm font-semibold text-gray-900">Thesis Submitted</p>
+                  <p class="text-xs text-gray-500">
+                    <%= new Date(thesis.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Under Review -->
+              <div class="flex items-start space-x-4">
+                <div class="w-8 h-8 <%= thesis.status === 'DRAFT' ? 'bg-gray-300' : 'bg-green-500' %> rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
+                  <i data-lucide="<%= thesis.status === 'DRAFT' ? 'circle' : 'check' %>" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="pt-1">
+                  <p class="text-sm font-semibold text-gray-900">Under Review</p>
+                  <% if (thesis.submittedAt) { %>
+                    <p class="text-xs text-gray-500">
+                      <%= new Date(thesis.submittedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </p>
+                  <% } else { %>
+                    <p class="text-xs text-gray-400">Pending submission</p>
+                  <% } %>
+                </div>
+              </div>
+
+              <!-- Approved/Rejected -->
+              <div class="flex items-start space-x-4">
+                <div class="w-8 h-8 <%= thesis.status === 'APPROVED' ? 'bg-green-500' : thesis.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-300' %> rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
+                  <i data-lucide="<%= thesis.status === 'APPROVED' ? 'check-circle' : thesis.status === 'REJECTED' ? 'x-circle' : 'circle' %>" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="pt-1">
+                  <p class="text-sm font-semibold text-gray-900">
+                    <%= thesis.status === 'APPROVED' ? 'Approved & Published' : thesis.status === 'REJECTED' ? 'Rejected' : 'Awaiting Decision' %>
+                  </p>
+                  <% if (thesis.reviewedAt) { %>
+                    <p class="text-xs text-gray-500">
+                      <%= new Date(thesis.reviewedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </p>
+                  <% } else { %>
+                    <p class="text-xs text-gray-400">Pending</p>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3 pt-6 border-t border-gray-200">
+          <% if (statusInfo.canEdit) { %>
+            <!-- Edit Draft -->
+            <a
+              href="/student/thesis/<%= thesis.id %>/edit"
+              class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+            >
+              <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
+              Continue Editing
+            </a>
+          <% } %>
+
+          <% if (thesis.status === 'APPROVED' && thesis.publishedAt) { %>
+            <!-- View Public Page -->
+            <a
+              href="/thesis/<%= thesis.id %>"
+              target="_blank"
+              class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+            >
+              <i data-lucide="external-link" class="w-4 h-4 mr-2"></i>
+              View Public Page
+            </a>
+          <% } %>
+
+          <% if (thesis.status === 'REJECTED') { %>
+            <!-- Contact Staff -->
+            <a
+              href="mailto:library@university.ac.id"
+              class="inline-flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+            >
+              <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+              Contact Library Staff
+            </a>
+          <% } %>
+        </div>
       </div>
-    <% } %>
-  </div>
+    </div>
+  <% } %>
 
   <!-- Help & Guidelines -->
   <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
     <div class="flex items-start">
-      <i class="fas fa-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
+      <i data-lucide="help-circle" class="w-6 h-6 text-blue-600 mr-3 mt-1 flex-shrink-0"></i>
       <div>
         <h3 class="text-sm font-semibold text-blue-900 mb-1">Need Help?</h3>
         <p class="text-sm text-blue-800 mb-2">
           Make sure to review the submission guidelines before uploading your thesis.
         </p>
-        <a href="/guidelines" class="text-sm text-blue-700 hover:text-blue-900 font-medium">
-          Read Submission Guidelines <i class="fas fa-external-link-alt ml-1 text-xs"></i>
+        <a href="/guidelines" class="text-sm text-blue-700 hover:text-blue-900 font-medium inline-flex items-center">
+          Read Submission Guidelines
+          <i data-lucide="external-link" class="w-3 h-3 ml-1"></i>
         </a>
       </div>
     </div>
   </div>
 
 </div>
+
+<!-- Initialize Lucide Icons -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  });
+</script>

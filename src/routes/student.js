@@ -1,31 +1,30 @@
+/**
+ * Student Routes
+ * Handles all student-specific routes (dashboard, submission, etc.)
+ */
+
 const express = require('express');
 const router = express.Router();
 const { requireStudent } = require('../middleware/role');
+const studentController = require('../controllers/studentController');
+
+// ============================================================================
+// STUDENT DASHBOARD
+// ============================================================================
 
 /**
  * GET /student/dashboard
- * Student dashboard (placeholder)
+ * Student dashboard - shows thesis status or empty state
  */
-router.get('/dashboard', requireStudent, (req, res) => {
-  // Placeholder statistics - TODO: Implement actual statistics queries
-  const stats = {
-    totalSubmissions: 0,
-    approvedSubmissions: 0,
-    pendingSubmissions: 0,
-  };
+router.get('/dashboard', requireStudent, studentController.dashboard);
 
-  // Placeholder recent submissions - TODO: Implement actual queries
-  const recentSubmissions = [];
+// ============================================================================
+// THESIS SUBMISSION (To be implemented in P3.2)
+// ============================================================================
 
-  res.renderWithLayout(
-    'student/dashboard',
-    {
-      title: 'Dashboard',
-      stats,
-      recentSubmissions,
-    },
-    'student'
-  );
-});
+// router.get('/submit', requireStudent, studentController.submitForm);
+// router.post('/submit', requireStudent, studentController.submitThesis);
+// router.get('/thesis/:id/edit', requireStudent, studentController.editForm);
+// router.post('/thesis/:id/update', requireStudent, studentController.updateThesis);
 
 module.exports = router;
