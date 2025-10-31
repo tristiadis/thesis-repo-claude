@@ -60,26 +60,20 @@ app.use((req, res, next) => {
 app.use(setLayoutDefaults);
 
 // Routes
+const publicRoutes = require('./routes/public');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const studentRoutes = require('./routes/student');
 const uploadRoutes = require('./routes/upload');
 
+// Public routes (homepage and browse pages)
+app.use('/', publicRoutes);
+
+// Authentication and protected routes
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/student', studentRoutes);
 app.use('/upload', uploadRoutes);
-
-// Home route - Redirect to login
-app.get('/', (req, res) => {
-  if (req.isAuthenticated()) {
-    // Redirect authenticated users to their dashboard
-    const redirectPath =
-      req.user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard';
-    return res.redirect(redirectPath);
-  }
-  res.redirect('/auth/login');
-});
 
 // 404 handler
 app.use((req, res) => {

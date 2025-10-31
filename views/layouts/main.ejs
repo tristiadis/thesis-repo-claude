@@ -209,7 +209,11 @@
       <!-- Copyright -->
       <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
         <p>&copy; <%= new Date().getFullYear() %> Thesis Repository System. All rights reserved.</p>
-        <p class="text-sm mt-2">Built with ❤️ for academic excellence</p>
+        <% if (typeof stats !== 'undefined' && stats) { %>
+          <p class="text-sm mt-2"><%= stats.totalTheses.toLocaleString() %> theses archived · <%= stats.totalDownloads.toLocaleString() %> total downloads</p>
+        <% } else { %>
+          <p class="text-sm mt-2">Built with ❤️ for academic excellence</p>
+        <% } %>
       </div>
     </div>
   </footer>
