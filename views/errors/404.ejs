@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="<%= locale %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= __('errors.404.title') %> - <%= __('home.title') %></title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+
+  <div class="text-center max-w-2xl mx-auto">
+    <!-- Error Icon -->
+    <div class="mb-8">
+      <i class="fas fa-search text-primary text-8xl opacity-20"></i>
+    </div>
+
+    <!-- Error Code -->
+    <h1 class="text-9xl font-bold text-gray-900 mb-4">404</h1>
+
+    <!-- Error Title -->
+    <h2 class="text-3xl font-bold text-gray-900 mb-4">
+      <%= __('errors.404.title') %>
+    </h2>
+
+    <!-- Error Message -->
+    <p class="text-gray-600 text-lg mb-8">
+      <%= message || __('errors.404.message') %>
+    </p>
+
+    <!-- Helpful Links -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <%= __('nav.search') %> <%= __('common.or').toLowerCase() %> <%= __('nav.browse').toLowerCase() %>:
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="/" class="block p-4 bg-gray-50 hover:bg-primary hover:text-white rounded-lg transition group">
+          <i class="fas fa-home text-2xl mb-2 group-hover:text-white"></i>
+          <div class="font-semibold"><%= __('nav.home') %></div>
+        </a>
+        <a href="/search" class="block p-4 bg-gray-50 hover:bg-primary hover:text-white rounded-lg transition group">
+          <i class="fas fa-search text-2xl mb-2 group-hover:text-white"></i>
+          <div class="font-semibold"><%= __('search.title') %></div>
+        </a>
+        <a href="/browse/faculties" class="block p-4 bg-gray-50 hover:bg-primary hover:text-white rounded-lg transition group">
+          <i class="fas fa-book text-2xl mb-2 group-hover:text-white"></i>
+          <div class="font-semibold"><%= __('browse.faculties') %></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="flex gap-4 justify-center">
+      <button
+        onclick="window.history.back()"
+        class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition tap-target"
+      >
+        <i class="fas fa-arrow-left mr-2"></i><%= __('common.back') %>
+      </button>
+      <a
+        href="/"
+        class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition tap-target"
+      >
+        <i class="fas fa-home mr-2"></i><%= __('errors.404.back_home') %>
+      </a>
+    </div>
+
+    <!-- Support Link -->
+    <div class="mt-8 text-gray-500">
+      <p class="text-sm">
+        <%= __('thesis.report_issue') %>? <a href="/contact" class="text-primary hover:underline"><%= __('footer.contact') %></a>
+      </p>
+    </div>
+  </div>
+
+  <style>
+    .tap-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  </style>
+
+</body>
+</html>

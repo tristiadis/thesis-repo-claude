@@ -4,6 +4,8 @@ const flash = require('connect-flash');
 const passport = require('./config/passport');
 const path = require('path');
 const i18n = require('./config/i18n');
+const logger = require('./config/logger');
+const errorHandler = require('./middleware/errorHandler');
 const { layoutMiddleware, setLayoutDefaults } = require('./middleware/layout');
 
 const app = express();
@@ -87,41 +89,22 @@ app.use('/admin', adminRoutes);
 app.use('/student', studentRoutes);
 app.use('/upload', uploadRoutes);
 
-// 404 handler
+// 404 handler - must be after all routes
 app.use((req, res) => {
-  res.status(404).render('error', {
-    statusCode: 404,
+  logger.warn('404 Not Found', {
+    method: req.method,
+    url: req.originalUrl,
+    ip: req.ip,
+  });
+
+  res.status(404).render('errors/404', {
     title: req.__('errors.404.title'),
     message: req.__('errors.404.message'),
-    description: req.__('errors.404.message'),
     user: req.user || null,
   });
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-
-  // Handle JSON requests
-  if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-    return res.status(statusCode).json({
-      error: {
-        message: message,
-        status: statusCode,
-      },
-    });
-  }
-
-  // Render error page
-  res.status(statusCode).render('error', {
-    statusCode: statusCode,
-    title: statusCode === 500 ? req.__('errors.500.title') : req.__('messages.error.general'),
-    message: message,
-    description: statusCode === 500 ? req.__('errors.500.message') : null,
-    user: req.user || null,
-  });
-});
+// Global error handler - must be last middleware
+app.use(errorHandler);
 
 module.exports = app;
