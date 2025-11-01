@@ -3,6 +3,7 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const passport = require('./config/passport');
 const path = require('path');
+const i18n = require('./config/i18n');
 const { layoutMiddleware, setLayoutDefaults } = require('./middleware/layout');
 
 const app = express();
@@ -46,6 +47,17 @@ app.use(passport.session());
 // Flash messages
 app.use(flash());
 
+// i18n initialization
+app.use(i18n.init);
+
+// Make locale and translation functions available in all views
+app.use((req, res, next) => {
+  res.locals.locale = req.getLocale();
+  res.locals.__ = req.__;
+  res.locals.__n = req.__n;
+  next();
+});
+
 // Layout middleware - adds res.renderWithLayout()
 app.use(layoutMiddleware);
 
@@ -79,9 +91,9 @@ app.use('/upload', uploadRoutes);
 app.use((req, res) => {
   res.status(404).render('error', {
     statusCode: 404,
-    title: 'Page Not Found',
-    message: 'The page you are looking for does not exist',
-    description: 'The requested URL was not found on this server.',
+    title: req.__('errors.404.title'),
+    message: req.__('errors.404.message'),
+    description: req.__('errors.404.message'),
     user: req.user || null,
   });
 });
@@ -105,9 +117,9 @@ app.use((err, req, res, next) => {
   // Render error page
   res.status(statusCode).render('error', {
     statusCode: statusCode,
-    title: statusCode === 500 ? 'Server Error' : 'Error',
+    title: statusCode === 500 ? req.__('errors.500.title') : req.__('messages.error.general'),
     message: message,
-    description: statusCode === 500 ? 'Something went wrong on our end. Please try again later.' : null,
+    description: statusCode === 500 ? req.__('errors.500.message') : null,
     user: req.user || null,
   });
 });
