@@ -15,6 +15,18 @@ const reviewRoutes = require('./review');
 router.get('/dashboard', requireAdmin, adminController.dashboard);
 
 /**
+ * GET /admin/statistics
+ * Statistics dashboard with comprehensive charts and reports
+ */
+router.get('/statistics', requireAdmin, adminController.statistics);
+
+/**
+ * GET /admin/statistics/export
+ * Export statistics report (CSV or JSON)
+ */
+router.get('/statistics/export', requireAdmin, adminController.exportStatistics);
+
+/**
  * Review Routes
  * Mount review routes under /admin/review
  */

@@ -232,6 +232,128 @@ const dashboard = async (req, res, next) => {
   }
 };
 
+/**
+ * Statistics Dashboard
+ * Comprehensive statistics with charts and reports
+ */
+const statistics = async (req, res, next) => {
+  try {
+    const statsService = require('../services/statsService');
+
+    // Get global statistics
+    const globalStats = await statsService.getGlobalStats();
+
+    // Get faculty statistics
+    const facultyStats = await statsService.getStatsByFaculty();
+
+    // Get monthly stats for current year
+    const monthlyStats = await statsService.getMonthlyStats();
+
+    // Get recent activity
+    const recentActivity = await statsService.getRecentActivity(50);
+
+    // Calculate this month stats
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const thisMonthLogs = await statsService.getStatsByDateRange(startOfMonth, endOfMonth);
+    const viewsThisMonth = thisMonthLogs.filter(log => log.eventType === 'VIEW').length;
+    const downloadsThisMonth = thisMonthLogs.filter(log => log.eventType === 'DOWNLOAD').length;
+
+    // Prepare chart data
+    const chartData = {
+      dailyStats: globalStats.dailyStats,
+      facultyStats: facultyStats.map(f => ({
+        name: f.name,
+        thesisCount: f.thesisCount,
+      })),
+      monthlyStats: monthlyStats,
+    };
+
+    res.renderWithLayout(
+      'admin/statistics',
+      {
+        title: 'Statistics Dashboard',
+        pageTitle: 'Statistics',
+        stats: {
+          totalTheses: globalStats.totalTheses,
+          totalViews: globalStats.totalViews,
+          totalDownloads: globalStats.totalDownloads,
+          viewsThisMonth,
+          downloadsThisMonth,
+        },
+        mostViewed: globalStats.mostViewed,
+        mostDownloaded: globalStats.mostDownloaded,
+        facultyStats,
+        recentActivity,
+        chartData: JSON.stringify(chartData),
+      },
+      'admin'
+    );
+  } catch (error) {
+    console.error('Error loading statistics:', error);
+    next(error);
+  }
+};
+
+/**
+ * Export Statistics Report
+ * Export statistics in CSV or JSON format
+ */
+const exportStatistics = async (req, res, next) => {
+  try {
+    const { format = 'csv', start, end, eventType } = req.query;
+    const statsService = require('../services/statsService');
+
+    // Parse dates
+    const startDate = start ? new Date(start) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = end ? new Date(end) : new Date();
+
+    // Get statistics for date range
+    const logs = await statsService.getStatsByDateRange(startDate, endDate, eventType || null);
+
+    if (format === 'json') {
+      // Export as JSON
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="statistics-${Date.now()}.json"`);
+      res.json(logs);
+    } else {
+      // Export as CSV
+      const csvRows = [];
+
+      // Header
+      csvRows.push('Timestamp,Event Type,Thesis ID,Thesis Title,Author,IP Hash,User Agent,Referer');
+
+      // Data rows
+      logs.forEach(log => {
+        const row = [
+          log.createdAt.toISOString(),
+          log.eventType,
+          log.thesisId,
+          log.thesis ? `"${log.thesis.title.replace(/"/g, '""')}"` : '',
+          log.thesis && log.thesis.submitter ? `"${log.thesis.submitter.name.replace(/"/g, '""')}"` : '',
+          log.ipHash,
+          log.userAgent ? `"${log.userAgent.replace(/"/g, '""')}"` : '',
+          log.referer ? `"${log.referer.replace(/"/g, '""')}"` : '',
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csv = csvRows.join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="statistics-${Date.now()}.csv"`);
+      res.send(csv);
+    }
+  } catch (error) {
+    console.error('Error exporting statistics:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   dashboard,
+  statistics,
+  exportStatistics,
 };

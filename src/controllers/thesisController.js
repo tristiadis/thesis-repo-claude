@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
 const risExporter = require('../services/risExporter');
+const statsService = require('../services/statsService');
 const prisma = new PrismaClient();
 
 /**
@@ -82,29 +83,8 @@ const show = async (req, res, next) => {
       });
     }
 
-    // Increment view count
-    await prisma.thesis.update({
-      where: { id: thesisId },
-      data: {
-        viewCount: {
-          increment: 1,
-        },
-      },
-    });
-
-    // Log view event
-    const visitorIP = req.ip || req.connection.remoteAddress || 'unknown';
-    const ipHash = hashIP(visitorIP);
-
-    await prisma.statisticsLog.create({
-      data: {
-        thesisId,
-        eventType: 'VIEW',
-        ipHash,
-        userAgent: req.get('user-agent') || null,
-        referer: req.get('referer') || null,
-      },
-    });
+    // Log view (increments view count and creates log entry)
+    await statsService.logView(thesisId, req);
 
     // Process files - check embargo status
     const now = new Date();
@@ -206,18 +186,7 @@ const exportRIS = async (req, res, next) => {
     const ris = await risExporter.generateRIS(thesisId, baseUrl);
 
     // Log export event
-    const visitorIP = req.ip || req.connection.remoteAddress || 'unknown';
-    const ipHash = hashIP(visitorIP);
-
-    await prisma.statisticsLog.create({
-      data: {
-        thesisId,
-        eventType: 'METADATA_EXPORT',
-        ipHash,
-        userAgent: req.get('user-agent') || null,
-        referer: req.get('referer') || null,
-      },
-    });
+    await statsService.logMetadataExport(thesisId, req);
 
     // Calculate content length
     const buffer = Buffer.from(ris, 'utf8');
@@ -286,18 +255,7 @@ const previewFile = async (req, res, next) => {
     }
 
     // Log preview event (don't increment download count)
-    const visitorIP = req.ip || req.connection.remoteAddress || 'unknown';
-    const ipHash = hashIP(visitorIP);
-
-    await prisma.statisticsLog.create({
-      data: {
-        thesisId,
-        eventType: 'PREVIEW',
-        ipHash,
-        userAgent: req.get('user-agent') || null,
-        referer: req.get('referer') || null,
-      },
-    });
+    await statsService.logPreview(thesisId, req);
 
     // Serve PDF file
     const fs = require('fs');
