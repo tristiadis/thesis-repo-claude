@@ -33,17 +33,22 @@
     "bcrypt": "^5.1.1",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^9.0.1",
+    "cookie-parser": "^1.4.7",
+    "csurf": "^1.11.0",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.1",
+    "express-rate-limit": "^8.2.1",
     "express-session": "^1.18.1",
     "express-validator": "^7.2.0",
+    "helmet": "^8.1.0",
     "i18n": "^0.15.3",
     "joi": "^18.0.1",
     "multer": "^1.4.5-lts.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "xss": "^1.0.15"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",

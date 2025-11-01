@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('../config/passport');
 const { isGuest } = require('../middleware/role');
+const { authLimiter } = require('../config/rateLimits');
 
 /**
  * GET /auth/login
@@ -15,10 +16,11 @@ router.get('/login', isGuest, (req, res) => {
 
 /**
  * POST /auth/login
- * Process login
+ * Process login with rate limiting
  */
 router.post(
   '/login',
+  authLimiter, // Rate limit login attempts (5 per 15 minutes)
   passport.authenticate('local', {
     failureRedirect: '/auth/login',
     failureFlash: true,
