@@ -253,7 +253,95 @@ const exportRIS = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /thesis/:thesisId/files/:fileId/preview - Preview PDF file
+ */
+const previewFile = async (req, res, next) => {
+  try {
+    const thesisId = parseInt(req.params.thesisId);
+    const fileId = parseInt(req.params.fileId);
+
+    // Get file with thesis and check access
+    const file = await prisma.thesisFile.findUnique({
+      where: { id: fileId },
+      include: {
+        thesis: true,
+      },
+    });
+
+    // Check if file exists and belongs to the thesis
+    if (!file || file.thesisId !== thesisId) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Check if thesis is approved
+    if (file.thesis.status !== 'APPROVED') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Check embargo status
+    const now = new Date();
+    if (file.embargoEnabled) {
+      if (file.embargoEndDate && new Date(file.embargoEndDate) > now) {
+        // Check if user is admin (can bypass embargo)
+        const isAdmin = req.user && req.user.role === 'ADMIN';
+        if (!isAdmin) {
+          return res.status(403).json({
+            error: 'File is embargoed',
+            message: `This file is under embargo until ${new Date(file.embargoEndDate).toLocaleDateString()}`,
+          });
+        }
+      }
+    }
+
+    // Log preview event (don't increment download count)
+    const visitorIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const ipHash = hashIP(visitorIP);
+
+    await prisma.statisticsLog.create({
+      data: {
+        thesisId,
+        eventType: 'PREVIEW',
+        ipHash,
+        userAgent: req.get('user-agent') || null,
+        referer: req.get('referer') || null,
+      },
+    });
+
+    // Serve PDF file
+    const fs = require('fs');
+    const path = require('path');
+
+    const filePath = path.join(process.cwd(), file.filePath);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found on server' });
+    }
+
+    // Set headers for inline display (preview)
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (error) => {
+      console.error('Error streaming file:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Error streaming file' });
+      }
+    });
+  } catch (error) {
+    console.error('Error previewing file:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   show,
   exportRIS,
+  previewFile,
 };

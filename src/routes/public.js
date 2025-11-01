@@ -36,6 +36,9 @@ router.get('/browse/years/:year', browseController.yearDetail);
 // GET /thesis/:id/export/ris - Export thesis citation in RIS format
 router.get('/thesis/:id/export/ris', thesisController.exportRIS);
 
+// GET /thesis/:thesisId/files/:fileId/preview - Preview PDF file
+router.get('/thesis/:thesisId/files/:fileId/preview', thesisController.previewFile);
+
 // GET /thesis/:id or /thesis/:id/:slug - Thesis detail page
 router.get('/thesis/:id/:slug?', thesisController.show);
 
