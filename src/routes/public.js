@@ -9,6 +9,7 @@ const publicController = require('../controllers/publicController');
 const searchController = require('../controllers/searchController');
 const browseController = require('../controllers/browseController');
 const thesisController = require('../controllers/thesisController');
+const downloadRateLimiter = require('../middleware/rateLimiter');
 
 // GET / - Homepage
 router.get('/', publicController.index);
@@ -38,6 +39,9 @@ router.get('/thesis/:id/export/ris', thesisController.exportRIS);
 
 // GET /thesis/:thesisId/files/:fileId/preview - Preview PDF file
 router.get('/thesis/:thesisId/files/:fileId/preview', thesisController.previewFile);
+
+// GET /thesis/:thesisId/files/:fileId/download - Download file with access control and rate limiting
+router.get('/thesis/:thesisId/files/:fileId/download', downloadRateLimiter, thesisController.downloadFile);
 
 // GET /thesis/:id or /thesis/:id/:slug - Thesis detail page
 router.get('/thesis/:id/:slug?', thesisController.show);

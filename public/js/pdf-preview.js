@@ -157,7 +157,7 @@ function printPDF() {
  * Download PDF
  */
 function downloadPDF(thesisId, fileId) {
-  window.location.href = `/upload/download/${fileId}`;
+  window.location.href = `/thesis/${thesisId}/files/${fileId}/download`;
 }
 
 /**
@@ -241,9 +241,14 @@ async function showPDFPreview(thesisId, fileId, fileName) {
     document.getElementById('page_count').textContent = pdfPreview.pdfDoc.numPages;
     document.getElementById('pdf-file-name').textContent = fileName || 'Document';
 
-    // Store for download button
+    // Store for download button and set download link
     window.currentPDFFileId = fileId;
     window.currentPDFThesisId = thesisId;
+
+    const downloadLink = document.getElementById('pdf-download-link');
+    if (downloadLink) {
+      downloadLink.href = `/thesis/${thesisId}/files/${fileId}/download`;
+    }
 
     // Hide loading, show viewer
     loadingSpinner.classList.add('hidden');

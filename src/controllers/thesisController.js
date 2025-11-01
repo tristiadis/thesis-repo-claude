@@ -86,26 +86,42 @@ const show = async (req, res, next) => {
     // Log view (increments view count and creates log entry)
     await statsService.logView(thesisId, req);
 
-    // Process files - check embargo status
+    // Process files - check access status
     const now = new Date();
-    const processedFiles = thesis.files.map(file => {
-      let accessStatus = 'public';
-      let embargoMessage = '';
+    const isAdmin = req.user && req.user.role === 'ADMIN';
 
-      if (file.embargoEnabled) {
-        if (file.embargoEndDate && new Date(file.embargoEndDate) > now) {
+    const processedFiles = thesis.files.map(file => {
+      let accessStatus = file.accessLevel.toLowerCase();
+      let embargoMessage = '';
+      let canDownload = false;
+
+      if (file.accessLevel === 'PUBLIC') {
+        canDownload = true;
+      } else if (file.accessLevel === 'EMBARGOED') {
+        if (file.embargoUntil && new Date(file.embargoUntil) > now) {
+          // Still embargoed
           accessStatus = 'embargoed';
-          embargoMessage = `Available from ${new Date(file.embargoEndDate).toLocaleDateString()}`;
+          embargoMessage = `Available from ${new Date(file.embargoUntil).toLocaleDateString()}`;
           if (file.embargoReason) {
             embargoMessage += ` - ${file.embargoReason}`;
           }
+          canDownload = isAdmin; // Only admins can download during embargo
+        } else {
+          // Embargo expired
+          canDownload = true;
+          accessStatus = 'public';
         }
+      } else if (file.accessLevel === 'RESTRICTED') {
+        accessStatus = 'restricted';
+        embargoMessage = 'Access restricted';
+        canDownload = isAdmin; // Only admins can download restricted files
       }
 
       return {
         ...file,
         accessStatus,
         embargoMessage,
+        canDownload,
       };
     });
 
@@ -239,18 +255,28 @@ const previewFile = async (req, res, next) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Check embargo status
+    // Check access level and embargo status
     const now = new Date();
-    if (file.embargoEnabled) {
-      if (file.embargoEndDate && new Date(file.embargoEndDate) > now) {
-        // Check if user is admin (can bypass embargo)
-        const isAdmin = req.user && req.user.role === 'ADMIN';
+    const isAdmin = req.user && req.user.role === 'ADMIN';
+
+    if (file.accessLevel === 'EMBARGOED') {
+      if (file.embargoUntil && new Date(file.embargoUntil) > now) {
+        // Still under embargo - only admins can access
         if (!isAdmin) {
           return res.status(403).json({
             error: 'File is embargoed',
-            message: `This file is under embargo until ${new Date(file.embargoEndDate).toLocaleDateString()}`,
+            message: `This file is under embargo until ${new Date(file.embargoUntil).toLocaleDateString()}`,
+            reason: file.embargoReason || null,
           });
         }
+      }
+    } else if (file.accessLevel === 'RESTRICTED') {
+      // Restricted files - only admins can access
+      if (!isAdmin) {
+        return res.status(403).json({
+          error: 'Access restricted',
+          message: 'Access to this file is restricted',
+        });
       }
     }
 
@@ -289,8 +315,151 @@ const previewFile = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /thesis/:thesisId/files/:fileId/download - Download file with access control
+ */
+const downloadFile = async (req, res, next) => {
+  try {
+    const thesisId = parseInt(req.params.thesisId);
+    const fileId = parseInt(req.params.fileId);
+
+    // Get file with thesis
+    const file = await prisma.thesisFile.findUnique({
+      where: { id: fileId },
+      include: {
+        thesis: true,
+      },
+    });
+
+    // Check if file exists and belongs to the thesis
+    if (!file || file.thesisId !== thesisId) {
+      return res.status(404).render('errors/404', {
+        title: 'File Not Found',
+        layout: 'layouts/main',
+        message: 'The requested file could not be found.',
+        user: req.user || null,
+      });
+    }
+
+    // Check if thesis is approved
+    if (file.thesis.status !== 'APPROVED') {
+      return res.status(403).render('error', {
+        title: 'Access Denied',
+        message: 'Access Denied',
+        details: 'This thesis is not yet published.',
+        statusCode: 403,
+      });
+    }
+
+    // Access Control Logic
+    const now = new Date();
+    const isAdmin = req.user && req.user.role === 'ADMIN';
+    let accessDenied = false;
+    let denialMessage = '';
+    let denialDetails = '';
+
+    if (file.accessLevel === 'PUBLIC') {
+      // Public access - allow download
+      accessDenied = false;
+    } else if (file.accessLevel === 'EMBARGOED') {
+      // Check embargo date
+      if (file.embargoUntil && new Date(file.embargoUntil) > now) {
+        // Still under embargo
+        if (!isAdmin) {
+          accessDenied = true;
+          denialMessage = 'File Under Embargo';
+          denialDetails = `This file is embargoed until ${new Date(file.embargoUntil).toLocaleDateString()}.`;
+          if (file.embargoReason) {
+            denialDetails += `\n\nReason: ${file.embargoReason}`;
+          }
+        }
+      }
+      // Embargo expired or admin - allow download
+    } else if (file.accessLevel === 'RESTRICTED') {
+      // Restricted access - only admins can download
+      if (!isAdmin) {
+        accessDenied = true;
+        denialMessage = 'Access Restricted';
+        denialDetails = 'Access to this file is restricted. Please contact the administrator if you need access.';
+      }
+    }
+
+    // If access denied, show error page
+    if (accessDenied) {
+      return res.status(403).render('error', {
+        title: 'Access Denied',
+        message: denialMessage,
+        details: denialDetails,
+        statusCode: 403,
+      });
+    }
+
+    // Access granted - proceed with download
+    const fs = require('fs');
+    const path = require('path');
+
+    const filePath = path.join(process.cwd(), file.filePath);
+
+    // Check if file exists on disk
+    if (!fs.existsSync(filePath)) {
+      console.error(`File not found on disk: ${filePath}`);
+      return res.status(404).render('errors/404', {
+        title: 'File Not Found',
+        layout: 'layouts/main',
+        message: 'The requested file could not be found on the server.',
+        user: req.user || null,
+      });
+    }
+
+    // Get file stats
+    const stat = fs.statSync(filePath);
+
+    // Set headers for download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${file.originalFilename}"`);
+    res.setHeader('Content-Length', stat.size);
+
+    // Create read stream
+    const readStream = fs.createReadStream(filePath);
+
+    // Handle stream errors
+    readStream.on('error', (error) => {
+      console.error('Error streaming file:', error);
+      if (!res.headersSent) {
+        res.status(500).render('error', {
+          title: 'Error',
+          message: 'Error Downloading File',
+          details: 'An error occurred while downloading the file. Please try again later.',
+          statusCode: 500,
+        });
+      }
+    });
+
+    // Log download and increment counters when stream completes successfully
+    readStream.on('end', async () => {
+      try {
+        // Log download in statistics (includes IP hash, user agent, etc.)
+        await statsService.logDownload(thesisId, fileId, req);
+
+        // Note: statsService.logDownload already increments downloadCount
+        // for both the file and the thesis, so we don't need to do it here
+      } catch (error) {
+        console.error('Error logging download:', error);
+        // Don't fail the download if logging fails
+      }
+    });
+
+    // Stream the file to response
+    readStream.pipe(res);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   show,
   exportRIS,
   previewFile,
+  downloadFile,
 };
