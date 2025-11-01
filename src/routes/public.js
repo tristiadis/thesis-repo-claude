@@ -8,6 +8,7 @@ const router = express.Router();
 const publicController = require('../controllers/publicController');
 const searchController = require('../controllers/searchController');
 const browseController = require('../controllers/browseController');
+const thesisController = require('../controllers/thesisController');
 
 // GET / - Homepage
 router.get('/', publicController.index);
@@ -30,5 +31,12 @@ router.get('/browse/years', browseController.browseYears);
 
 // GET /browse/years/:year - Year detail with theses
 router.get('/browse/years/:year', browseController.yearDetail);
+
+// Thesis detail routes
+// GET /thesis/:id/export/ris - Export thesis citation in RIS format
+router.get('/thesis/:id/export/ris', thesisController.exportRIS);
+
+// GET /thesis/:id or /thesis/:id/:slug - Thesis detail page
+router.get('/thesis/:id/:slug?', thesisController.show);
 
 module.exports = router;
