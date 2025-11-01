@@ -236,9 +236,11 @@
             </button>
             <a
               href="/thesis/<%= thesis.id %>/export/ris"
+              onclick="showExportToast()"
               class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors inline-block"
+              title="Download citation for Mendeley, EndNote, Zotero"
             >
-              <i class="fas fa-file-download mr-2"></i>Export RIS
+              <i class="fas fa-file-download mr-2"></i>Export Citation (RIS)
             </a>
           </div>
         </div>
@@ -360,6 +362,9 @@
     </div>
   </div>
 </div>
+
+<!-- Toast Notification Container -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 
 <!-- PDF Preview Modal -->
 <div id="pdf-preview-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
@@ -503,13 +508,49 @@
 <script src="/js/pdf-preview.js"></script>
 
 <script>
+// Show toast notification
+function showToast(message, type = 'success') {
+  const toastContainer = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+
+  const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+  toast.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-80 animate-slide-in`;
+  toast.innerHTML = `
+    <i class="fas ${icon} text-2xl"></i>
+    <span class="flex-1">${message}</span>
+    <button onclick="this.parentElement.remove()" class="text-white hover:text-gray-200">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  // Auto remove after 4 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('animate-fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 4000);
+}
+
+// Show export toast notification
+function showExportToast() {
+  setTimeout(() => {
+    showToast('Citation downloaded successfully! You can now import it into Mendeley, Zotero, or EndNote.');
+  }, 100);
+}
+
 // Copy citation to clipboard
 function copyCitation() {
   const citation = `<%= citation.replace(/'/g, "\\'") %>`;
   navigator.clipboard.writeText(citation).then(() => {
-    alert('Citation copied to clipboard!');
+    showToast('Citation copied to clipboard!');
   }).catch(err => {
     console.error('Failed to copy citation:', err);
+    showToast('Failed to copy citation', 'error');
   });
 }
 
@@ -517,9 +558,40 @@ function copyCitation() {
 function copyLink() {
   const url = '<%= seo.url %>';
   navigator.clipboard.writeText(url).then(() => {
-    alert('Link copied to clipboard!');
+    showToast('Link copied to clipboard!');
   }).catch(err => {
     console.error('Failed to copy link:', err);
+    showToast('Failed to copy link', 'error');
   });
 }
 </script>
+
+<style>
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.3s ease-out;
+}
+</style>

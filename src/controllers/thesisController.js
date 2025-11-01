@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
+const risExporter = require('../services/risExporter');
 const prisma = new PrismaClient();
 
 /**
@@ -33,30 +34,6 @@ function formatCitation(thesis, baseUrl) {
   const url = `${baseUrl}/thesis/${thesis.id}`;
 
   return `${author}. (${year}). ${title}. [Undergraduate thesis, ${faculty}, ${university}]. ${url}`;
-}
-
-/**
- * Generate RIS export format
- */
-function generateRIS(thesis, baseUrl) {
-  const url = `${baseUrl}/thesis/${thesis.id}`;
-
-  let ris = '';
-  ris += 'TY  - THES\n';
-  ris += `AU  - ${thesis.submitter.name}\n`;
-  ris += `TI  - ${thesis.title}\n`;
-  ris += `PY  - ${thesis.graduationYear}\n`;
-  ris += `UR  - ${url}\n`;
-  ris += `AB  - ${thesis.abstractId || ''}\n`;
-  if (thesis.keywords) {
-    thesis.keywords.split(',').forEach(kw => {
-      ris += `KW  - ${kw.trim()}\n`;
-    });
-  }
-  ris += `PB  - ${thesis.department.faculty.name}\n`;
-  ris += 'ER  - \n';
-
-  return ris;
 }
 
 /**
@@ -223,32 +200,46 @@ const show = async (req, res, next) => {
 const exportRIS = async (req, res, next) => {
   try {
     const thesisId = parseInt(req.params.id);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
 
-    const thesis = await prisma.thesis.findUnique({
-      where: { id: thesisId },
-      include: {
-        department: {
-          include: {
-            faculty: true,
-          },
-        },
-        submitter: true,
+    // Generate RIS using service
+    const ris = await risExporter.generateRIS(thesisId, baseUrl);
+
+    // Log export event
+    const visitorIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const ipHash = hashIP(visitorIP);
+
+    await prisma.statisticsLog.create({
+      data: {
+        thesisId,
+        eventType: 'METADATA_EXPORT',
+        ipHash,
+        userAgent: req.get('user-agent') || null,
+        referer: req.get('referer') || null,
       },
     });
 
-    if (!thesis || thesis.status !== 'APPROVED') {
-      return res.status(404).send('Thesis not found');
-    }
-
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const ris = generateRIS(thesis, baseUrl);
+    // Calculate content length
+    const buffer = Buffer.from(ris, 'utf8');
 
     // Set headers for file download
-    res.setHeader('Content-Type', 'application/x-research-info-systems');
-    res.setHeader('Content-Disposition', `attachment; filename="thesis-${thesis.id}.ris"`);
+    res.setHeader('Content-Type', 'application/x-research-info-systems; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="thesis-${thesisId}.ris"`);
+    res.setHeader('Content-Length', buffer.length);
+
+    // Send RIS file
     res.send(ris);
   } catch (error) {
     console.error('Error exporting RIS:', error);
+
+    if (error.message === 'Thesis not found' || error.message === 'Thesis is not approved') {
+      return res.status(404).send(error.message);
+    }
+
+    if (error.message.includes('Missing required fields')) {
+      return res.status(400).send(error.message);
+    }
+
     next(error);
   }
 };
