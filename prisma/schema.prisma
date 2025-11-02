@@ -153,6 +153,7 @@ model User {
   // Relations
   submittedTheses Thesis[] @relation("ThesisSubmitter")
   reviewedTheses  Thesis[] @relation("ThesisReviewer")
+  uploadedTheses  Thesis[] @relation("ThesisUploader")
 
   @@map("users")
   @@index([username])
@@ -200,6 +201,8 @@ model Thesis {
   viewCount      Int           @default(0)
   downloadCount  Int           @default(0)
   publishedAt    DateTime?     // When approved and made public
+  isPublished    Boolean       @default(false) // Published flag (approved but not yet public)
+  uploadedBy     Int?          // Who uploaded (admin or student who created)
 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -208,6 +211,7 @@ model Thesis {
   department     Department    @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   submitter      User          @relation("ThesisSubmitter", fields: [submitterId], references: [id], onDelete: Restrict)
   reviewer       User?         @relation("ThesisReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  uploader       User?         @relation("ThesisUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
   advisor1       Lecturer      @relation("ThesisAdvisor1", fields: [advisor1Id], references: [id], onDelete: Restrict)
   advisor2       Lecturer?     @relation("ThesisAdvisor2", fields: [advisor2Id], references: [id], onDelete: Restrict)
   examiner1      Lecturer      @relation("ThesisExaminer1", fields: [examiner1Id], references: [id], onDelete: Restrict)
@@ -220,9 +224,11 @@ model Thesis {
   @@index([departmentId])
   @@index([submitterId])
   @@index([reviewedBy])
+  @@index([uploadedBy])
   @@index([status])
   @@index([graduationYear])
   @@index([publishedAt])
+  @@index([isPublished])
   @@index([advisor1Id])
   @@index([examiner1Id])
 }

@@ -103,19 +103,21 @@ const submitForm = async (req, res, next) => {
     // Get submission data from session
     const submissionData = req.session.submissionData || {};
 
-    // Check if student already has a pending or approved thesis
-    const existingThesis = await prisma.thesis.findFirst({
-      where: {
-        submitterId: req.user.id,
-        status: {
-          in: ['PENDING', 'APPROVED'],
+    // Check if student already has a pending or approved thesis (skip for admin)
+    if (req.user.role === 'STUDENT') {
+      const existingThesis = await prisma.thesis.findFirst({
+        where: {
+          submitterId: req.user.id,
+          status: {
+            in: ['PENDING', 'APPROVED'],
+          },
         },
-      },
-    });
+      });
 
-    if (existingThesis) {
-      req.flash('error', 'You already have a thesis that is pending or approved');
-      return res.redirect('/student/dashboard');
+      if (existingThesis) {
+        req.flash('error', 'You already have a thesis that is pending or approved');
+        return res.redirect('/student/dashboard');
+      }
     }
 
     // Load departments for Step 1
@@ -147,11 +149,19 @@ const submitForm = async (req, res, next) => {
     // Validate all required data
     const validation = validateSubmissionData(submissionData);
 
+    // Determine layout and page title based on role
+    const isAdmin = req.user.role === 'ADMIN';
+    const layout = isAdmin ? 'admin' : 'student';
+    const pageTitle = isAdmin ? 'Upload Thesis' : 'Submit Thesis';
+    const pageSubtitle = isAdmin
+      ? 'Upload thesis metadata and files'
+      : 'Review and submit your thesis for approval';
+
     res.renderWithLayout(
       'student/submit',
       {
-        pageTitle: 'Submit Thesis',
-        pageSubtitle: 'Review and submit your thesis for approval',
+        pageTitle,
+        pageSubtitle,
         submissionData,
         departments,
         lecturers,
@@ -159,7 +169,7 @@ const submitForm = async (req, res, next) => {
         user: req.user,
         currentPath: req.path,
       },
-      'student'
+      layout
     );
   } catch (error) {
     console.error('Error loading submit form:', error);
@@ -216,6 +226,7 @@ const saveDraft = async (req, res, next) => {
         thesis = await tx.thesis.create({
           data: {
             submitterId: studentId,
+            uploadedBy: studentId,
             title: data.title,
             titleEn: data.titleEn || null,
             authorName: data.authorName,
@@ -233,6 +244,7 @@ const saveDraft = async (req, res, next) => {
             examiner2Id: data.examiner2Id ? parseInt(data.examiner2Id) : null,
             examiner3Id: data.examiner3Id ? parseInt(data.examiner3Id) : null,
             status: 'DRAFT',
+            isPublished: false,
           },
         });
       }
@@ -285,37 +297,49 @@ const saveDraft = async (req, res, next) => {
  */
 const submitThesis = async (req, res, next) => {
   try {
-    const studentId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
     const data = req.body;
 
     // Validate all required fields
     const validation = validateSubmissionData(data);
     if (!validation.isValid) {
       req.flash('error', 'Please fill in all required fields and upload all required files');
-      return res.redirect('/student/submit');
+      const redirectUrl = userRole === 'ADMIN' ? '/admin/submit' : '/student/submit';
+      return res.redirect(redirectUrl);
     }
 
-    // Check if student already has a pending or approved thesis
-    const existingThesis = await prisma.thesis.findFirst({
-      where: {
-        submitterId: studentId,
-        status: {
-          in: ['PENDING', 'APPROVED'],
+    // For students, check if they already have a pending or approved thesis
+    if (userRole === 'STUDENT') {
+      const existingThesis = await prisma.thesis.findFirst({
+        where: {
+          submitterId: userId,
+          status: {
+            in: ['PENDING', 'APPROVED'],
+          },
         },
-      },
-    });
+      });
 
-    if (existingThesis) {
-      req.flash('error', 'You already have a thesis that is pending or approved');
-      return res.redirect('/student/dashboard');
+      if (existingThesis) {
+        req.flash('error', 'You already have a thesis that is pending or approved');
+        return res.redirect('/student/dashboard');
+      }
     }
+
+    // Determine status and timestamps based on role
+    const isAdmin = userRole === 'ADMIN';
+    const thesisStatus = isAdmin ? 'APPROVED' : 'PENDING';
+    const submittedAt = new Date();
+    const reviewedAt = isAdmin ? new Date() : null;
+    const reviewedBy = isAdmin ? userId : null;
 
     // Use Prisma transaction for data consistency
     const result = await prisma.$transaction(async (tx) => {
       // Create thesis record
       const thesis = await tx.thesis.create({
         data: {
-          submitterId: studentId,
+          submitterId: userId,
+          uploadedBy: userId,
           title: data.title,
           titleEn: data.titleEn || null,
           authorName: data.authorName,
@@ -332,8 +356,11 @@ const submitThesis = async (req, res, next) => {
           examiner1Id: parseInt(data.examiner1Id),
           examiner2Id: data.examiner2Id ? parseInt(data.examiner2Id) : null,
           examiner3Id: data.examiner3Id ? parseInt(data.examiner3Id) : null,
-          status: 'PENDING',
-          submittedAt: new Date(),
+          status: thesisStatus,
+          isPublished: false,
+          submittedAt: submittedAt,
+          reviewedAt: reviewedAt,
+          reviewedBy: reviewedBy,
         },
       });
 
@@ -368,12 +395,19 @@ const submitThesis = async (req, res, next) => {
     // Clear session data
     delete req.session.submissionData;
 
-    req.flash('success', 'Your thesis has been submitted for review successfully!');
-    res.redirect('/student/dashboard');
+    // Success message based on role
+    if (req.user.role === 'ADMIN') {
+      req.flash('success', 'Thesis uploaded successfully and marked as APPROVED. You can now publish it.');
+      res.redirect('/admin/review');
+    } else {
+      req.flash('success', 'Your thesis has been submitted for review successfully!');
+      res.redirect('/student/dashboard');
+    }
   } catch (error) {
     console.error('Error submitting thesis:', error);
     req.flash('error', 'Failed to submit thesis. Please try again.');
-    res.redirect('/student/submit');
+    const redirectUrl = req.user.role === 'ADMIN' ? '/admin/submit' : '/student/submit';
+    res.redirect(redirectUrl);
   }
 };
 

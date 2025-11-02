@@ -6,6 +6,7 @@ const facultyController = require('../controllers/facultyController');
 const departmentController = require('../controllers/departmentController');
 const lecturerController = require('../controllers/lecturerController');
 const userController = require('../controllers/userController');
+const studentController = require('../controllers/studentController');
 const reviewRoutes = require('./review');
 
 /**
@@ -31,6 +32,19 @@ router.get('/statistics/export', requireAdmin, adminController.exportStatistics)
  * Mount review routes under /admin/review
  */
 router.use('/review', reviewRoutes);
+
+/**
+ * Thesis Submission Routes (Admin Upload)
+ * Admin can upload thesis directly - status will be APPROVED but not published
+ */
+// Show submission form
+router.get('/submit', requireAdmin, studentController.submitForm);
+
+// Submit thesis (admin upload)
+router.post('/submit', requireAdmin, studentController.submitThesis);
+
+// Save as draft (optional for admin)
+router.post('/submit/draft', requireAdmin, studentController.saveDraft);
 
 /**
  * Faculty Routes

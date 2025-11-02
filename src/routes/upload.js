@@ -16,11 +16,12 @@ const {
   validatePDF,
   getFileMetadata,
 } = require('../utils/fileHandler');
-const { requireAuth, requireStudent } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/auth');
 
 /**
  * POST /upload/thesis-file
  * Upload a single thesis file to temporary storage
+ * Available for both ADMIN and STUDENT roles
  *
  * Request body:
  * - file: PDF file (multipart/form-data)
@@ -34,7 +35,6 @@ const { requireAuth, requireStudent } = require('../middleware/auth');
 router.post(
   '/thesis-file',
   requireAuth,
-  requireStudent,
   uploadThesis.single('file'),
   validateFileSize,
   handleMulterError,
@@ -165,6 +165,7 @@ router.post(
 /**
  * DELETE /upload/thesis-file/:fileType
  * Delete a previously uploaded file from temporary storage
+ * Available for both ADMIN and STUDENT roles
  *
  * URL params:
  * - fileType: Type of file to delete (COVER, CHAPTER_1, etc.)
@@ -176,7 +177,6 @@ router.post(
 router.delete(
   '/thesis-file/:fileType',
   requireAuth,
-  requireStudent,
   async (req, res) => {
     try {
       const { fileType } = req.params;
@@ -244,12 +244,13 @@ router.delete(
 /**
  * GET /upload/session-files
  * Get list of all files in current session
+ * Available for both ADMIN and STUDENT roles
  *
  * Response:
  * - success: boolean
  * - files: array of file objects
  */
-router.get('/session-files', requireAuth, requireStudent, (req, res) => {
+router.get('/session-files', requireAuth, (req, res) => {
   try {
     const files = req.session.uploadedFiles || [];
 
@@ -279,12 +280,13 @@ router.get('/session-files', requireAuth, requireStudent, (req, res) => {
 /**
  * POST /upload/clear-session
  * Clear all files from session (cleanup)
+ * Available for both ADMIN and STUDENT roles
  *
  * Response:
  * - success: boolean
  * - message: string
  */
-router.post('/clear-session', requireAuth, requireStudent, async (req, res) => {
+router.post('/clear-session', requireAuth, async (req, res) => {
   try {
     const files = req.session.uploadedFiles || [];
 
