@@ -151,9 +151,10 @@ model User {
   updatedAt DateTime  @updatedAt
 
   // Relations
-  submittedTheses Thesis[] @relation("ThesisSubmitter")
-  reviewedTheses  Thesis[] @relation("ThesisReviewer")
-  uploadedTheses  Thesis[] @relation("ThesisUploader")
+  submittedTheses Thesis[]            @relation("ThesisSubmitter")
+  reviewedTheses  Thesis[]            @relation("ThesisReviewer")
+  uploadedTheses  Thesis[]            @relation("ThesisUploader")
+  editHistory     ThesisEditHistory[] // Audit trail of edits made by this user
 
   @@map("users")
   @@index([username])
@@ -193,7 +194,7 @@ model Thesis {
   // Advisors and Examiners
   advisor1Id     Int
   advisor2Id     Int?
-  examiner1Id    Int
+  examiner1Id    Int?          // Optional - not all theses have examiners
   examiner2Id    Int?
   examiner3Id    Int?
 
@@ -214,11 +215,12 @@ model Thesis {
   uploader       User?         @relation("ThesisUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
   advisor1       Lecturer      @relation("ThesisAdvisor1", fields: [advisor1Id], references: [id], onDelete: Restrict)
   advisor2       Lecturer?     @relation("ThesisAdvisor2", fields: [advisor2Id], references: [id], onDelete: Restrict)
-  examiner1      Lecturer      @relation("ThesisExaminer1", fields: [examiner1Id], references: [id], onDelete: Restrict)
+  examiner1      Lecturer?     @relation("ThesisExaminer1", fields: [examiner1Id], references: [id], onDelete: Restrict)
   examiner2      Lecturer?     @relation("ThesisExaminer2", fields: [examiner2Id], references: [id], onDelete: Restrict)
-  examiner3      Lecturer?     @relation("ThesisExaminer3", fields: [examiner3Id], references: [id], onDelete: Restrict)
+  examiner3      Lecturer?           @relation("ThesisExaminer3", fields: [examiner3Id], references: [id], onDelete: Restrict)
   files          ThesisFile[]
   statisticsLogs StatisticsLog[]
+  editHistory    ThesisEditHistory[] // Audit trail of edits
 
   @@map("theses")
   @@index([departmentId])
@@ -233,12 +235,37 @@ model Thesis {
   @@index([examiner1Id])
 }
 
+/// Thesis Edit History (Riwayat Edit Skripsi)
+/// Audit trail for all thesis modifications by admins
+model ThesisEditHistory {
+  id          Int      @id @default(autoincrement())
+  thesisId    Int
+  userId      Int      // Admin who made the edit
+  action      String   @db.VarChar(50) // EDIT_METADATA, ADD_FILE, DELETE_FILE, EDIT_FILE
+  fieldName   String?  @db.VarChar(100) // Field that was edited (for EDIT_METADATA)
+  oldValue    String?  @db.Text // Previous value
+  newValue    String?  @db.Text // New value
+  description String?  @db.Text // Human-readable description of change
+  editedAt    DateTime @default(now())
+
+  // Relations
+  thesis      Thesis   @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("thesis_edit_history")
+  @@index([thesisId])
+  @@index([userId])
+  @@index([editedAt])
+  @@index([action])
+}
+
 /// Thesis File (File-file Skripsi)
 /// Individual file components of a thesis
+/// Flexible file system - admin can add custom file labels
 model ThesisFile {
   id               Int         @id @default(autoincrement())
   thesisId         Int
-  fileType         FileType
+  fileLabel        String      @db.VarChar(200) // Custom label (e.g., "Full Text", "Cover", "Bab 1", etc)
   filename         String      // Stored filename
   originalFilename String      // Original upload filename
   filePath         String      // Relative path from upload root
@@ -264,7 +291,7 @@ model ThesisFile {
 
   @@map("thesis_files")
   @@index([thesisId])
-  @@index([fileType])
+  @@index([fileLabel])
   @@index([accessLevel])
   @@index([embargoUntil])
 }
