@@ -15,6 +15,25 @@ const {
 } = require('../utils/fileHandler');
 
 /**
+ * Convert old fileType enum to readable file label
+ * For backward compatibility with student upload system
+ */
+function fileTypeToLabel(fileType) {
+  const mapping = {
+    COVER: 'Cover',
+    CHAPTER_1: 'Chapter 1',
+    CHAPTER_2: 'Chapter 2',
+    CHAPTER_3: 'Chapter 3',
+    CHAPTER_4: 'Chapter 4',
+    CHAPTER_5: 'Chapter 5',
+    BIBLIOGRAPHY: 'Bibliography',
+    APPENDIX: 'Appendix',
+    OTHER: 'Other',
+  };
+  return mapping[fileType] || fileType;
+}
+
+/**
  * Student Dashboard
  * Shows thesis status or empty state if no thesis submitted
  */
@@ -263,7 +282,7 @@ const saveDraft = async (req, res, next) => {
           await tx.thesisFile.create({
             data: {
               thesisId: thesis.id,
-              fileType: file.type,
+              fileLabel: fileTypeToLabel(file.type), // Convert enum to label
               filename: file.filename,
               originalFilename: file.originalname,
               filePath: file.path,
@@ -353,7 +372,7 @@ const submitThesis = async (req, res, next) => {
           keywordsEn: data.keywordsEn || null,
           advisor1Id: parseInt(data.advisor1Id),
           advisor2Id: data.advisor2Id ? parseInt(data.advisor2Id) : null,
-          examiner1Id: parseInt(data.examiner1Id),
+          examiner1Id: data.examiner1Id ? parseInt(data.examiner1Id) : null, // Optional
           examiner2Id: data.examiner2Id ? parseInt(data.examiner2Id) : null,
           examiner3Id: data.examiner3Id ? parseInt(data.examiner3Id) : null,
           status: thesisStatus,
@@ -376,7 +395,7 @@ const submitThesis = async (req, res, next) => {
           await tx.thesisFile.create({
             data: {
               thesisId: thesis.id,
-              fileType: file.type,
+              fileLabel: fileTypeToLabel(file.type), // Convert enum to label
               filename: file.filename,
               originalFilename: file.originalname,
               filePath: permanentPath,
