@@ -1,0 +1,444 @@
+<!-- Admin Dashboard Page -->
+<div class="space-y-6">
+
+  <!-- Welcome Header -->
+  <div class="bg-gradient-to-r from-admin-800 to-admin-900 rounded-xl shadow-lg p-6 text-white">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">
+          <i class="fas fa-user-shield mr-2"></i>Welcome, <%= user.name %>!
+        </h1>
+        <p class="text-gray-300">Manage your thesis repository system from this dashboard</p>
+      </div>
+      <div>
+        <a href="/admin/submit" class="inline-flex items-center px-6 py-3 bg-white text-admin-800 font-semibold rounded-lg shadow-lg hover:bg-gray-100 transition-all hover:scale-105">
+          <i class="fas fa-upload mr-2"></i>Upload Thesis
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Statistics Cards (2x2 Grid) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- PENDING REVIEWS - PROMINENT CARD -->
+    <div class="bg-white rounded-xl shadow-lg p-8 border-l-4 <%= stats.pendingTheses > 0 ? 'border-red-500' : 'border-yellow-500' %> hover:shadow-xl transition">
+      <div class="flex items-center justify-between">
+        <div class="flex-1">
+          <div class="flex items-center mb-2">
+            <i class="fas fa-clock text-3xl <%= stats.pendingTheses > 0 ? 'text-red-500' : 'text-yellow-500' %> mr-3"></i>
+            <div>
+              <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Pending Reviews</p>
+              <% if (stats.pendingTheses > 0) { %>
+                <span class="inline-block mt-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full animate-pulse">
+                  ACTION REQUIRED
+                </span>
+              <% } %>
+            </div>
+          </div>
+          <p class="text-5xl font-bold <%= stats.pendingTheses > 0 ? 'text-red-600' : 'text-yellow-600' %> mb-2">
+            <%= stats.pendingTheses %>
+          </p>
+          <% if (stats.pendingTheses > 0) { %>
+            <a href="/admin/theses/pending" class="inline-flex items-center text-sm font-medium text-red-600 hover:text-red-800 transition">
+              Review Now <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+          <% } else { %>
+            <p class="text-sm text-gray-500">All caught up! 🎉</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOTAL THESES -->
+    <div class="bg-white rounded-xl shadow-sm p-8 hover:shadow-md transition border-l-4 border-green-500">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-file-alt text-white text-2xl"></i>
+        </div>
+        <div class="ml-5 flex-1">
+          <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Total Theses</p>
+          <p class="text-4xl font-bold text-gray-900"><%= stats.totalTheses %></p>
+          <p class="text-xs text-gray-500 mt-1"><%= stats.approvedTheses %> approved</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOTAL STUDENTS -->
+    <div class="bg-white rounded-xl shadow-sm p-8 hover:shadow-md transition border-l-4 border-blue-500">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-user-graduate text-white text-2xl"></i>
+        </div>
+        <div class="ml-5 flex-1">
+          <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Total Students</p>
+          <p class="text-4xl font-bold text-gray-900"><%= stats.totalStudents %></p>
+          <p class="text-xs text-gray-500 mt-1">Active users</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOTAL LECTURERS -->
+    <div class="bg-white rounded-xl shadow-sm p-8 hover:shadow-md transition border-l-4 border-purple-500">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-chalkboard-teacher text-white text-2xl"></i>
+        </div>
+        <div class="ml-5 flex-1">
+          <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Total Lecturers</p>
+          <p class="text-4xl font-bold text-gray-900"><%= stats.totalLecturers %></p>
+          <p class="text-xs text-gray-500 mt-1"><%= stats.totalDepartments %> departments</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Theses by Status Chart -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-gray-900">
+        <i class="fas fa-chart-bar text-indigo-600 mr-2"></i>Theses by Status
+      </h2>
+      <div class="flex items-center space-x-4 text-sm">
+        <div class="flex items-center">
+          <span class="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>
+          <span class="text-gray-600">Draft: <%= stats.draftTheses %></span>
+        </div>
+        <div class="flex items-center">
+          <span class="w-3 h-3 rounded-full bg-yellow-400 mr-2"></span>
+          <span class="text-gray-600">Pending: <%= stats.pendingTheses %></span>
+        </div>
+        <div class="flex items-center">
+          <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+          <span class="text-gray-600">Approved: <%= stats.approvedTheses %></span>
+        </div>
+        <div class="flex items-center">
+          <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+          <span class="text-gray-600">Rejected: <%= stats.rejectedTheses %></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="relative h-64">
+      <canvas id="statusChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent Submissions Table -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-gray-900">
+        <i class="fas fa-history text-gray-600 mr-2"></i>Recent Submissions
+      </h2>
+      <a href="/admin/theses" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition">
+        View All <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+
+    <% if (recentSubmissions && recentSubmissions.length > 0) { %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200" id="recentTable">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
+                Title <i class="fas fa-sort ml-1 text-gray-400"></i>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
+                Student <i class="fas fa-sort ml-1 text-gray-400"></i>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(2)">
+                Department <i class="fas fa-sort ml-1 text-gray-400"></i>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(3)">
+                Date <i class="fas fa-sort ml-1 text-gray-400"></i>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
+                Status <i class="fas fa-sort ml-1 text-gray-400"></i>
+              </th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% recentSubmissions.forEach(submission => { %>
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4">
+                  <div class="text-sm font-medium text-gray-900 max-w-xs truncate" title="<%= submission.title %>">
+                    <%= submission.title %>
+                  </div>
+                  <div class="text-xs text-gray-500">by <%= submission.authorName %></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900"><%= submission.submitterName %></div>
+                  <div class="text-xs text-gray-500">@<%= submission.submitterUsername %></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900"><%= submission.departmentName %></div>
+                  <div class="text-xs text-gray-500"><%= submission.facultyName %></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= new Date(submission.submittedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% if (submission.status === 'APPROVED') { %>
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      <i class="fas fa-check-circle mr-1"></i> Approved
+                    </span>
+                  <% } else if (submission.status === 'PENDING') { %>
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      <i class="fas fa-clock mr-1"></i> Pending
+                    </span>
+                  <% } else if (submission.status === 'REJECTED') { %>
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                      <i class="fas fa-times-circle mr-1"></i> Rejected
+                    </span>
+                  <% } else { %>
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                      <%= submission.status %>
+                    </span>
+                  <% } %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <a href="/admin/thesis/<%= submission.id %>" class="text-blue-600 hover:text-blue-900 transition">
+                    View <i class="fas fa-arrow-right ml-1"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="text-center py-12">
+        <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+        <p class="text-gray-500 text-lg">No recent submissions</p>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Most Viewed Theses Table -->
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-gray-900">
+        <i class="fas fa-fire text-orange-500 mr-2"></i>Most Viewed Theses
+      </h2>
+      <a href="/admin/statistics" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition">
+        View Statistics <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+
+    <% if (mostViewedTheses && mostViewedTheses.length > 0) { %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Rank
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Title
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Department
+              </th>
+              <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Views
+              </th>
+              <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Downloads
+              </th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% mostViewedTheses.forEach((thesis, index) => { %>
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center justify-center w-8 h-8 rounded-full <%= index === 0 ? 'bg-yellow-100 text-yellow-800' : index === 1 ? 'bg-gray-100 text-gray-700' : index === 2 ? 'bg-orange-100 text-orange-700' : 'bg-blue-50 text-blue-600' %> font-bold text-sm">
+                    <%= index + 1 %>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm font-medium text-gray-900 max-w-md truncate" title="<%= thesis.title %>">
+                    <%= thesis.title %>
+                  </div>
+                  <div class="text-xs text-gray-500">by <%= thesis.authorName %> (<%= thesis.graduationYear %>)</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= thesis.departmentName %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex items-center justify-center">
+                    <i class="fas fa-eye text-blue-500 mr-2"></i>
+                    <span class="text-sm font-semibold text-gray-900"><%= thesis.viewCount %></span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex items-center justify-center">
+                    <i class="fas fa-download text-green-500 mr-2"></i>
+                    <span class="text-sm font-semibold text-gray-900"><%= thesis.downloadCount %></span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <a href="/admin/thesis/<%= thesis.id %>" class="text-blue-600 hover:text-blue-900 transition">
+                    View <i class="fas fa-arrow-right ml-1"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="text-center py-12">
+        <i class="fas fa-chart-line text-gray-300 text-5xl mb-4"></i>
+        <p class="text-gray-500 text-lg">No statistics available yet</p>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Quick Links / System Info -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Quick Actions -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+      <h3 class="text-lg font-bold text-gray-900 mb-4">
+        <i class="fas fa-bolt text-yellow-500 mr-2"></i>Quick Actions
+      </h3>
+      <div class="space-y-2">
+        <a href="/admin/theses/pending" class="block p-3 bg-white rounded-lg hover:shadow-md transition group">
+          <i class="fas fa-clipboard-check text-green-600 mr-2 group-hover:scale-110 transition-transform"></i>
+          <span class="text-sm font-medium text-gray-700 group-hover:text-green-700">Review Pending Theses</span>
+        </a>
+        <a href="/admin/users/new" class="block p-3 bg-white rounded-lg hover:shadow-md transition group">
+          <i class="fas fa-user-plus text-blue-600 mr-2 group-hover:scale-110 transition-transform"></i>
+          <span class="text-sm font-medium text-gray-700 group-hover:text-blue-700">Add New User</span>
+        </a>
+        <a href="/admin/faculties" class="block p-3 bg-white rounded-lg hover:shadow-md transition group">
+          <i class="fas fa-building text-purple-600 mr-2 group-hover:scale-110 transition-transform"></i>
+          <span class="text-sm font-medium text-gray-700 group-hover:text-purple-700">Manage Organizations</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- System Overview -->
+    <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+      <h3 class="text-lg font-bold text-gray-900 mb-4">
+        <i class="fas fa-info-circle text-blue-600 mr-2"></i>System Overview
+      </h3>
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between items-center p-2 bg-white rounded">
+          <span class="text-gray-600">Faculties</span>
+          <span class="font-bold text-gray-900"><%= stats.totalFaculties %></span>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-white rounded">
+          <span class="text-gray-600">Departments</span>
+          <span class="font-bold text-gray-900"><%= stats.totalDepartments %></span>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-white rounded">
+          <span class="text-gray-600">Administrators</span>
+          <span class="font-bold text-gray-900"><%= stats.totalAdmins %></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Initialize Chart -->
+<script>
+  // Parse chart data from server
+  const chartData = <%- chartData %>;
+
+  // Create the chart
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  const statusChart = new Chart(ctx, {
+    type: 'bar',
+    data: chartData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          titleFont: {
+            size: 14,
+            weight: 'bold'
+          },
+          bodyFont: {
+            size: 13
+          },
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + ' theses';
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            font: {
+              size: 12
+            }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        },
+        x: {
+          ticks: {
+            font: {
+              size: 13,
+              weight: 'bold'
+            }
+          },
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+
+  // Simple table sorting function
+  function sortTable(columnIndex) {
+    const table = document.getElementById('recentTable');
+    const tbody = table.getElementsByTagName('tbody')[0];
+    const rows = Array.from(tbody.getElementsByTagName('tr'));
+
+    // Toggle sort direction
+    const currentDir = table.getAttribute('data-sort-dir') || 'asc';
+    const newDir = currentDir === 'asc' ? 'desc' : 'asc';
+    table.setAttribute('data-sort-dir', newDir);
+
+    // Sort rows
+    rows.sort((a, b) => {
+      const aValue = a.getElementsByTagName('td')[columnIndex].textContent.trim();
+      const bValue = b.getElementsByTagName('td')[columnIndex].textContent.trim();
+
+      if (newDir === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    });
+
+    // Reorder rows in table
+    rows.forEach(row => tbody.appendChild(row));
+  }
+</script>

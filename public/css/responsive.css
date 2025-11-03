@@ -1,0 +1,353 @@
+/**
+ * Responsive Design Utilities
+ * Mobile, tablet, and desktop optimizations
+ */
+
+/* ============================================
+   MOBILE FIXES
+   ============================================ */
+
+/* Prevent zoom on input focus (iOS Safari) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* Fix viewport height issues (100vh bug on mobile) */
+.min-h-screen-mobile {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden;
+}
+
+/* Touch-friendly tap targets (minimum 44x44px) */
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Better touch scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* ============================================
+   MOBILE NAVIGATION
+   ============================================ */
+
+/* Hamburger menu animation */
+.hamburger-line {
+  transition: all 0.3s ease;
+}
+
+.hamburger-open .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-open .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-open .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Mobile menu slide-in animation */
+.mobile-menu {
+  transition: transform 0.3s ease;
+}
+
+.mobile-menu-closed {
+  transform: translateX(-100%);
+}
+
+/* ============================================
+   RESPONSIVE TABLES
+   ============================================ */
+
+/* Horizontal scroll for tables on mobile */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+  width: 100%;
+}
+
+.table-responsive table {
+  min-width: 600px;
+}
+
+/* Card layout for mobile tables */
+@media (max-width: 640px) {
+  .table-card {
+    display: none;
+  }
+
+  .mobile-card {
+    display: block;
+  }
+}
+
+@media (min-width: 641px) {
+  .table-card {
+    display: table;
+  }
+
+  .mobile-card {
+    display: none;
+  }
+}
+
+/* ============================================
+   FORM OPTIMIZATIONS
+   ============================================ */
+
+/* Full-width inputs on mobile */
+@media (max-width: 640px) {
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 100%;
+  }
+}
+
+/* Larger touch targets for checkboxes and radio buttons */
+input[type="checkbox"],
+input[type="radio"] {
+  min-width: 20px;
+  min-height: 20px;
+  cursor: pointer;
+}
+
+/* Sticky form buttons on mobile */
+@media (max-width: 640px) {
+  .sticky-form-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1rem;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 40;
+  }
+}
+
+/* ============================================
+   GRID & CARD LAYOUTS
+   ============================================ */
+
+/* Responsive grid for thesis cards */
+.thesis-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .thesis-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .thesis-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .thesis-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ============================================
+   MODAL & OVERLAY
+   ============================================ */
+
+/* Full-screen modal on mobile */
+@media (max-width: 640px) {
+  .modal-content {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+/* Bottom sheet on mobile */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  z-index: 50;
+}
+
+.bottom-sheet.open {
+  transform: translateY(0);
+}
+
+/* ============================================
+   PDF PREVIEW RESPONSIVE
+   ============================================ */
+
+/* Full-screen PDF preview on mobile */
+@media (max-width: 640px) {
+  #pdf-preview-modal .bg-white.rounded-lg {
+    border-radius: 0;
+    height: 100vh;
+  }
+}
+
+/* ============================================
+   TOUCH INTERACTIONS
+   ============================================ */
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better touch feedback */
+.touch-feedback:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+/* Swipeable cards */
+.swipeable {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+/* ============================================
+   LANDSCAPE MODE
+   ============================================ */
+
+/* Handle landscape orientation on mobile */
+@media (max-width: 812px) and (orientation: landscape) {
+  .landscape-hidden {
+    display: none;
+  }
+
+  .landscape-compact {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+/* Skeleton loading for mobile */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-full-width {
+    width: 100% !important;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  z-index: 100;
+  transition: top 0.3s;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Hide scrollbar on mobile for cleaner look */
+@media (max-width: 640px) {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

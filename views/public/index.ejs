@@ -1,0 +1,263 @@
+<!-- Homepage -->
+<div class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+  <!-- Hero Section with Search -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto text-center">
+      <h1 class="text-5xl font-bold text-gray-900 mb-6">
+        Discover Academic Excellence
+      </h1>
+      <p class="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
+        Search through thousands of research theses and dissertations from our academic community
+      </p>
+
+      <!-- Large Search Box -->
+      <form action="/search" method="GET" class="max-w-4xl mx-auto mb-12">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1 relative">
+            <input
+              type="text"
+              name="q"
+              placeholder="Search theses by title, abstract, or keywords..."
+              class="w-full px-6 py-4 text-lg rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+            >
+            <i class="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
+          </div>
+          <button
+            type="submit"
+            class="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg"
+          >
+            <i class="fas fa-search mr-2"></i>
+            Search
+          </button>
+        </div>
+        <div class="mt-4 text-sm text-gray-500">
+          <a href="/advanced-search" class="hover:text-blue-600 transition">
+            <i class="fas fa-sliders-h mr-1"></i>Advanced Search
+          </a>
+        </div>
+      </form>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <div class="text-4xl font-bold text-blue-600 mb-2"><%= stats.totalTheses.toLocaleString() %></div>
+          <div class="text-gray-600 font-medium">Theses Archived</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <div class="text-4xl font-bold text-green-600 mb-2"><%= stats.totalDownloads.toLocaleString() %></div>
+          <div class="text-gray-600 font-medium">Downloads</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <div class="text-4xl font-bold text-purple-600 mb-2"><%= stats.facultiesCount %></div>
+          <div class="text-gray-600 font-medium">Faculties</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Browse Options -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Browse Collection</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Browse by Faculty -->
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 hover:shadow-lg transition">
+          <div class="text-blue-600 text-4xl mb-4">
+            <i class="fas fa-university"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">By Faculty</h3>
+          <p class="text-gray-600 mb-4">Explore theses organized by academic faculty</p>
+          <a href="/browse/faculties" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+            Browse Faculties
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+
+        <!-- Browse by Year -->
+        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 hover:shadow-lg transition">
+          <div class="text-green-600 text-4xl mb-4">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">By Year</h3>
+          <p class="text-gray-600 mb-4">Find theses by graduation year</p>
+          <a href="/browse/years" class="inline-flex items-center text-green-600 hover:text-green-700 font-medium">
+            Browse Years
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+
+        <!-- Browse by Advisor -->
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 hover:shadow-lg transition">
+          <div class="text-purple-600 text-4xl mb-4">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">By Advisor</h3>
+          <p class="text-gray-600 mb-4">Discover works by research advisors</p>
+          <a href="/browse/advisor" class="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium">
+            Browse Advisors
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Faculty Grid -->
+      <% if (faculties && faculties.length > 0) { %>
+        <div class="mt-12">
+          <h3 class="text-2xl font-bold text-gray-900 mb-6">Faculties</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <% faculties.filter(f => f.thesisCount > 0).slice(0, 8).forEach(faculty => { %>
+              <a href="/browse/faculties/<%= faculty.id %>" class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-500 hover:shadow-md transition">
+                <div class="font-semibold text-gray-900 mb-1"><%= faculty.name %></div>
+                <div class="text-sm text-gray-500"><%= faculty.thesisCount %> theses</div>
+              </a>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- Recent Additions -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Recent Additions</h2>
+        <a href="/browse/recent" class="text-blue-600 hover:text-blue-700 font-medium">
+          View All
+          <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% recentTheses.forEach(thesis => { %>
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+            <!-- Cover Placeholder -->
+            <div class="h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+              <i class="fas fa-book text-6xl text-blue-300"></i>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6">
+              <div class="flex items-center text-xs text-gray-500 mb-2">
+                <i class="fas fa-calendar mr-1"></i>
+                <%= thesis.graduationYear %>
+                <span class="mx-2">•</span>
+                <i class="fas fa-eye mr-1"></i>
+                <%= thesis.viewCount || 0 %> views
+              </div>
+
+              <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                <%= thesis.title %>
+              </h3>
+
+              <p class="text-sm text-gray-600 mb-2">
+                <i class="fas fa-user mr-1"></i>
+                <%= thesis.authorName %>
+              </p>
+
+              <p class="text-xs text-gray-500 mb-4">
+                <%= thesis.department.name %> · <%= thesis.department.faculty.name %>
+              </p>
+
+              <a href="/thesis/<%= thesis.id %>" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                View Details
+                <i class="fas fa-arrow-right ml-2"></i>
+              </a>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Most Viewed -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Most Viewed</h2>
+        <a href="/browse/popular" class="text-blue-600 hover:text-blue-700 font-medium">
+          View All
+          <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% mostViewedTheses.forEach(thesis => { %>
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition border border-gray-200">
+            <!-- Cover Placeholder -->
+            <div class="h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+              <i class="fas fa-book-open text-6xl text-purple-300"></i>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6">
+              <div class="flex items-center text-xs text-gray-500 mb-2">
+                <i class="fas fa-calendar mr-1"></i>
+                <%= thesis.graduationYear %>
+                <span class="mx-2">•</span>
+                <i class="fas fa-eye mr-1"></i>
+                <span class="font-semibold text-purple-600"><%= thesis.viewCount || 0 %></span> views
+              </div>
+
+              <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                <%= thesis.title %>
+              </h3>
+
+              <p class="text-sm text-gray-600 mb-2">
+                <i class="fas fa-user mr-1"></i>
+                <%= thesis.authorName %>
+              </p>
+
+              <p class="text-xs text-gray-500 mb-4">
+                <%= thesis.department.name %> · <%= thesis.department.faculty.name %>
+              </p>
+
+              <a href="/thesis/<%= thesis.id %>" class="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium">
+                View Details
+                <i class="fas fa-arrow-right ml-2"></i>
+              </a>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-4">Ready to Submit Your Thesis?</h2>
+      <p class="text-xl mb-8 text-blue-100">
+        Join our academic community and make your research accessible to the world
+      </p>
+      <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
+        <% if (user.role === 'STUDENT') { %>
+          <a href="/student/submit" class="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
+            Submit Your Thesis
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        <% } else { %>
+          <a href="/student/dashboard" class="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
+            Go to Dashboard
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        <% } %>
+      <% } else { %>
+        <a href="/auth/login" class="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
+          Login to Submit
+          <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

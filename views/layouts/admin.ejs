@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Admin Panel - Thesis Repository</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Alpine.js CDN (with Collapse plugin) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            admin: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Styles for Loading States -->
+  <style>
+    /* Loading overlay */
+    .page-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    /* Button loading spinner */
+    .btn-loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      top: 50%;
+      left: 50%;
+      margin-left: -8px;
+      margin-top: -8px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spinner 0.6s linear infinite;
+    }
+
+    @keyframes spinner {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Smooth transitions */
+    * {
+      transition-property: background-color, border-color, color, fill, stroke;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 150ms;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 antialiased" x-data="adminApp()" x-cloak>
+
+  <!-- Page Loading Overlay -->
+  <div x-show="pageLoading" class="page-loading">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <p class="mt-4 text-gray-600 font-medium">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Admin Sidebar -->
+  <%- include('../partials/admin-sidebar') %>
+
+  <!-- Main Content Area -->
+  <div class="lg:ml-64 min-h-screen flex flex-col">
+
+    <!-- Top Bar -->
+    <%- include('../partials/admin-topbar') %>
+
+    <!-- Flash Messages -->
+    <%- include('../partials/flash') %>
+
+    <!-- Page Content -->
+    <main class="flex-1 p-4 lg:p-8">
+      <!-- Breadcrumbs -->
+      <%- include('../partials/breadcrumbs') %>
+
+      <!-- Main Content -->
+      <%- body %>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 px-4 lg:px-8 mt-auto">
+      <div class="flex flex-col md:flex-row items-center justify-between text-sm text-gray-600">
+        <p>&copy; <%= new Date().getFullYear() %> Thesis Repository System. All rights reserved.</p>
+        <p class="mt-2 md:mt-0">
+          <span class="font-medium text-gray-900">Admin Panel</span> v1.0
+        </p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Alpine.js App Initialization -->
+  <script>
+    function adminApp() {
+      return {
+        pageLoading: false,
+
+        init() {
+          // Initialize Lucide icons
+          lucide.createIcons();
+
+          // Add loading states to all forms
+          this.setupFormLoading();
+
+          // Add loading states to all navigation links
+          this.setupNavigationLoading();
+        },
+
+        setupFormLoading() {
+          document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', (e) => {
+              const submitBtn = form.querySelector('button[type="submit"]');
+              if (submitBtn && !submitBtn.classList.contains('btn-loading')) {
+                submitBtn.classList.add('btn-loading');
+                submitBtn.disabled = true;
+              }
+            });
+          });
+        },
+
+        setupNavigationLoading() {
+          document.querySelectorAll('a[href^="/admin"]').forEach(link => {
+            link.addEventListener('click', (e) => {
+              // Don't show loading for anchor links or external links
+              if (link.getAttribute('href').startsWith('#') || link.target === '_blank') {
+                return;
+              }
+
+              // Show loading overlay
+              this.pageLoading = true;
+
+              // Hide loading after 3 seconds as fallback
+              setTimeout(() => {
+                this.pageLoading = false;
+              }, 3000);
+            });
+          });
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

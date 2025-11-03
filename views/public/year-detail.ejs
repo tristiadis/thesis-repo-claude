@@ -1,0 +1,378 @@
+<!-- Year Detail Page -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Page Header -->
+  <div class="bg-gradient-to-r from-green-600 to-green-800 text-white py-12">
+    <div class="container mx-auto px-4">
+      <!-- Breadcrumb -->
+      <div class="text-sm mb-4">
+        <a href="/" class="hover:text-green-200 transition">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <span class="mx-2">/</span>
+        <a href="/browse/years" class="hover:text-green-200 transition">
+          Browse by Year
+        </a>
+        <span class="mx-2">/</span>
+        <span><%= year %></span>
+      </div>
+
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <h1 class="text-4xl font-bold mb-4">Theses from <%= year %></h1>
+          <p class="text-green-100 text-lg">
+            Explore all theses published in <%= year %>
+          </p>
+        </div>
+        <div class="hidden lg:block ml-8">
+          <i class="fas fa-calendar-alt text-8xl text-green-300 opacity-50"></i>
+        </div>
+      </div>
+
+      <!-- Total Count -->
+      <div class="mt-6 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 inline-block">
+        <div class="text-3xl font-bold mb-1">
+          <%= totalCount.toLocaleString() %>
+        </div>
+        <div class="text-green-100">
+          <%= totalCount === 1 ? 'Thesis' : 'Theses' %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Bar -->
+  <% if (Object.keys(facultyStats).length > 0) { %>
+    <div class="bg-white border-b border-gray-200 py-6">
+      <div class="container mx-auto px-4">
+        <h3 class="text-sm font-semibold text-gray-600 mb-3">Distribution by Faculty</h3>
+        <div class="flex flex-wrap gap-3">
+          <% Object.entries(facultyStats).forEach(([facultyName, count]) => { %>
+            <div class="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+              <div class="text-lg font-bold text-green-700"><%= count %></div>
+              <div class="text-xs text-gray-600"><%= facultyName %></div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Content -->
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Filter Sidebar -->
+      <aside class="lg:w-64 flex-shrink-0">
+        <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold text-gray-900">Filters</h2>
+            <% if (filters.facultyId || filters.departmentId || filters.sort !== 'title') { %>
+              <a href="/browse/years/<%= year %>" class="text-sm text-green-600 hover:text-green-800">
+                Clear
+              </a>
+            <% } %>
+          </div>
+
+          <!-- Sort Options -->
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Sort By
+            </label>
+            <select
+              name="sort"
+              onchange="this.form.submit()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              form="filter-form"
+            >
+              <option value="title" <%= filters.sort === 'title' ? 'selected' : '' %>>Title (A-Z)</option>
+              <option value="author" <%= filters.sort === 'author' ? 'selected' : '' %>>Author (A-Z)</option>
+              <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Viewed</option>
+            </select>
+          </div>
+
+          <!-- Faculty Filter -->
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Faculty
+            </label>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+              <% faculties.forEach(faculty => { %>
+                <label class="flex items-center hover:bg-gray-50 p-2 rounded cursor-pointer">
+                  <input
+                    type="radio"
+                    name="faculty"
+                    value="<%= faculty.id %>"
+                    <%= filters.facultyId === faculty.id ? 'checked' : '' %>
+                    onchange="updateDepartments(<%= faculty.id %>); document.getElementById('filter-form').submit()"
+                    form="filter-form"
+                    class="mr-2"
+                  />
+                  <span class="text-sm text-gray-700"><%= faculty.name %></span>
+                </label>
+              <% }); %>
+              <% if (filters.facultyId) { %>
+                <label class="flex items-center hover:bg-gray-50 p-2 rounded cursor-pointer">
+                  <input
+                    type="radio"
+                    name="faculty"
+                    value=""
+                    onchange="document.getElementById('filter-form').submit()"
+                    form="filter-form"
+                    class="mr-2"
+                  />
+                  <span class="text-sm text-green-600 font-semibold">All Faculties</span>
+                </label>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Department Filter (only show if faculty is selected) -->
+          <% if (filters.facultyId) { %>
+            <%
+              const selectedFaculty = faculties.find(f => f.id === filters.facultyId);
+              const departments = selectedFaculty ? selectedFaculty.departments : [];
+            %>
+            <% if (departments.length > 0) { %>
+              <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Department
+                </label>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                  <% departments.forEach(dept => { %>
+                    <label class="flex items-center hover:bg-gray-50 p-2 rounded cursor-pointer">
+                      <input
+                        type="radio"
+                        name="department"
+                        value="<%= dept.id %>"
+                        <%= filters.departmentId === dept.id ? 'checked' : '' %>
+                        onchange="document.getElementById('filter-form').submit()"
+                        form="filter-form"
+                        class="mr-2"
+                      />
+                      <span class="text-sm text-gray-700"><%= dept.name %></span>
+                    </label>
+                  <% }); %>
+                  <% if (filters.departmentId) { %>
+                    <label class="flex items-center hover:bg-gray-50 p-2 rounded cursor-pointer">
+                      <input
+                        type="radio"
+                        name="department"
+                        value=""
+                        onchange="document.getElementById('filter-form').submit()"
+                        form="filter-form"
+                        class="mr-2"
+                      />
+                      <span class="text-sm text-green-600 font-semibold">All Departments</span>
+                    </label>
+                  <% } %>
+                </div>
+              </div>
+            <% } %>
+          <% } %>
+
+          <!-- Hidden Filter Form -->
+          <form id="filter-form" action="/browse/years/<%= year %>" method="GET" style="display: none;"></form>
+        </div>
+      </aside>
+
+      <!-- Theses List -->
+      <main class="flex-1">
+        <% if (theses.length > 0) { %>
+          <!-- Results Info -->
+          <div class="mb-4 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+              Showing <%= ((currentPage - 1) * limit + 1).toLocaleString() %>-<%= Math.min(currentPage * limit, totalCount).toLocaleString() %>
+              of <%= totalCount.toLocaleString() %> <%= totalCount === 1 ? 'thesis' : 'theses' %>
+            </div>
+          </div>
+
+          <!-- Theses List -->
+          <div class="space-y-4">
+            <% theses.forEach(thesis => { %>
+              <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <!-- Title -->
+                <h3 class="text-xl font-bold text-gray-900 mb-2">
+                  <a href="/thesis/<%= thesis.id %>" class="hover:text-green-600 transition-colors">
+                    <%= thesis.title %>
+                  </a>
+                </h3>
+
+                <!-- Metadata -->
+                <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+                  <span>
+                    <i class="fas fa-user mr-1"></i><%= thesis.submitter.name %>
+                  </span>
+                  <span>•</span>
+                  <span>
+                    <i class="fas fa-building mr-1"></i><%= thesis.department.name %>
+                  </span>
+                  <span>•</span>
+                  <span>
+                    <i class="fas fa-university mr-1"></i><%= thesis.department.faculty.name %>
+                  </span>
+                  <% if (thesis.advisor) { %>
+                    <span>•</span>
+                    <span>
+                      <i class="fas fa-chalkboard-teacher mr-1"></i><%= thesis.advisor %>
+                    </span>
+                  <% } %>
+                </div>
+
+                <!-- Abstract Snippet -->
+                <% if (thesis.abstractId) { %>
+                  <p class="text-gray-700 mb-3 line-clamp-3">
+                    <%= thesis.abstractId.substring(0, 200) %><%= thesis.abstractId.length > 200 ? '...' : '' %>
+                  </p>
+                <% } %>
+
+                <!-- Keywords -->
+                <% if (thesis.keywords) { %>
+                  <div class="flex flex-wrap gap-2 mb-3">
+                    <% thesis.keywords.split(',').slice(0, 5).forEach(keyword => { %>
+                      <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                        <%= keyword.trim() %>
+                      </span>
+                    <% }); %>
+                  </div>
+                <% } %>
+
+                <!-- Stats -->
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                  <span>
+                    <i class="fas fa-eye mr-1"></i><%= thesis.viewCount || 0 %> views
+                  </span>
+                  <span>
+                    <i class="fas fa-download mr-1"></i><%= thesis.downloadCount || 0 %> downloads
+                  </span>
+                  <% if (thesis._count.files > 0) { %>
+                    <span>
+                      <i class="fas fa-file mr-1"></i><%= thesis._count.files %> file(s)
+                    </span>
+                  <% } %>
+                </div>
+              </article>
+            <% }); %>
+          </div>
+
+          <!-- Pagination -->
+          <% if (totalPages > 1) { %>
+            <div class="mt-8 flex justify-center">
+              <nav class="flex items-center gap-2">
+                <!-- Previous Button -->
+                <% if (hasPrevPage) { %>
+                  <a
+                    href="/browse/years/<%= year %>?page=<%= currentPage - 1 %><%= filters.facultyId ? '&faculty=' + filters.facultyId : '' %><%= filters.departmentId ? '&department=' + filters.departmentId : '' %>&sort=<%= filters.sort %>"
+                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                  >
+                    <i class="fas fa-chevron-left mr-1"></i>Previous
+                  </a>
+                <% } else { %>
+                  <span class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-400 cursor-not-allowed">
+                    <i class="fas fa-chevron-left mr-1"></i>Previous
+                  </span>
+                <% } %>
+
+                <!-- Page Numbers -->
+                <div class="hidden sm:flex gap-2">
+                  <%
+                    const maxPages = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxPages - 1);
+
+                    if (endPage - startPage < maxPages - 1) {
+                      startPage = Math.max(1, endPage - maxPages + 1);
+                    }
+                  %>
+
+                  <% if (startPage > 1) { %>
+                    <a
+                      href="/browse/years/<%= year %>?page=1<%= filters.facultyId ? '&faculty=' + filters.facultyId : '' %><%= filters.departmentId ? '&department=' + filters.departmentId : '' %>&sort=<%= filters.sort %>"
+                      class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                    >
+                      1
+                    </a>
+                    <% if (startPage > 2) { %>
+                      <span class="px-4 py-2 text-gray-500">...</span>
+                    <% } %>
+                  <% } %>
+
+                  <% for (let i = startPage; i <= endPage; i++) { %>
+                    <% if (i === currentPage) { %>
+                      <span class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold">
+                        <%= i %>
+                      </span>
+                    <% } else { %>
+                      <a
+                        href="/browse/years/<%= year %>?page=<%= i %><%= filters.facultyId ? '&faculty=' + filters.facultyId : '' %><%= filters.departmentId ? '&department=' + filters.departmentId : '' %>&sort=<%= filters.sort %>"
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                      >
+                        <%= i %>
+                      </a>
+                    <% } %>
+                  <% } %>
+
+                  <% if (endPage < totalPages) { %>
+                    <% if (endPage < totalPages - 1) { %>
+                      <span class="px-4 py-2 text-gray-500">...</span>
+                    <% } %>
+                    <a
+                      href="/browse/years/<%= year %>?page=<%= totalPages %><%= filters.facultyId ? '&faculty=' + filters.facultyId : '' %><%= filters.departmentId ? '&department=' + filters.departmentId : '' %>&sort=<%= filters.sort %>"
+                      class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                    >
+                      <%= totalPages %>
+                    </a>
+                  <% } %>
+                </div>
+
+                <!-- Next Button -->
+                <% if (hasNextPage) { %>
+                  <a
+                    href="/browse/years/<%= year %>?page=<%= currentPage + 1 %><%= filters.facultyId ? '&faculty=' + filters.facultyId : '' %><%= filters.departmentId ? '&department=' + filters.departmentId : '' %>&sort=<%= filters.sort %>"
+                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                  >
+                    Next<i class="fas fa-chevron-right ml-1"></i>
+                  </a>
+                <% } else { %>
+                  <span class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-400 cursor-not-allowed">
+                    Next<i class="fas fa-chevron-right ml-1"></i>
+                  </span>
+                <% } %>
+              </nav>
+            </div>
+          <% } %>
+
+        <% } else { %>
+          <!-- Empty State -->
+          <div class="bg-white rounded-lg shadow-md p-12 text-center">
+            <div class="mb-6">
+              <i class="fas fa-book text-6xl text-gray-300"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">No Theses Found</h3>
+            <p class="text-gray-600 mb-8">
+              <% if (filters.facultyId || filters.departmentId) { %>
+                No theses found for the selected filters. Try a different selection or clear filters.
+              <% } else { %>
+                No theses were published in <%= year %>.
+              <% } %>
+            </p>
+            <div class="flex gap-4 justify-center">
+              <% if (filters.facultyId || filters.departmentId || filters.sort !== 'title') { %>
+                <a
+                  href="/browse/years/<%= year %>"
+                  class="inline-block px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  <i class="fas fa-times mr-2"></i>Clear Filters
+                </a>
+              <% } %>
+              <a
+                href="/browse/years"
+                class="inline-block px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                <i class="fas fa-arrow-left mr-2"></i>Back to All Years
+              </a>
+            </div>
+          </div>
+        <% } %>
+      </main>
+    </div>
+  </div>
+</div>

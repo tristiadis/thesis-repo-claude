@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Thesis Repository System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md">
+    <!-- Login Card -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-center">
+        <div class="mb-4">
+          <i class="fas fa-graduation-cap text-white text-5xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white mb-2">Thesis Repository</h1>
+        <p class="text-blue-100">Welcome back! Please login to continue</p>
+      </div>
+
+      <!-- Flash Messages -->
+      <% if (typeof flashMessage !== 'undefined' && flashMessage) { %>
+        <div class="mx-6 mt-6">
+          <% if (flashMessage.type === 'error') { %>
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+              <div class="flex items-center">
+                <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                <p class="text-red-700 text-sm"><%= flashMessage.message %></p>
+              </div>
+            </div>
+          <% } else if (flashMessage.type === 'success') { %>
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+              <div class="flex items-center">
+                <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                <p class="text-green-700 text-sm"><%= flashMessage.message %></p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+
+      <!-- Login Form -->
+      <div class="p-8">
+        <form action="/auth/login" method="POST" class="space-y-6">
+
+          <!-- Username Field -->
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-user text-gray-400 mr-2"></i>Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              autocomplete="username"
+              autofocus
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
+              placeholder="Enter your username"
+            >
+          </div>
+
+          <!-- Password Field -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-lock text-gray-400 mr-2"></i>Password
+            </label>
+            <div class="relative">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                autocomplete="current-password"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
+                placeholder="Enter your password"
+              >
+              <button
+                type="button"
+                onclick="togglePassword()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                <i class="fas fa-eye" id="toggleIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember Me (Optional) -->
+          <!-- <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="remember"
+              name="remember"
+              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            >
+            <label for="remember" class="ml-2 block text-sm text-gray-700">
+              Remember me
+            </label>
+          </div> -->
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <i class="fas fa-sign-in-alt mr-2"></i>Login
+          </button>
+
+        </form>
+
+        <!-- Additional Links -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            Need help? <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Contact Support</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-gray-50 px-8 py-4 border-t border-gray-200 text-center">
+        <p class="text-xs text-gray-500">
+          &copy; <%= new Date().getFullYear() %> Thesis Repository System. All rights reserved.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Default Credentials Info (Remove in production) -->
+    <% if (process.env.NODE_ENV === 'development') { %>
+      <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-yellow-800 mb-2">
+          <i class="fas fa-info-circle mr-2"></i>Development Mode - Default Credentials
+        </h3>
+        <div class="text-xs text-yellow-700 space-y-1">
+          <p><strong>Admin:</strong> admin / admin123</p>
+          <p><strong>Student:</strong> student1 / student123</p>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+
+  <!-- Toggle Password Visibility Script -->
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleIcon = document.getElementById('toggleIcon');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+      }
+    }
+
+    // Auto-hide flash messages after 5 seconds
+    setTimeout(() => {
+      const flashMessages = document.querySelectorAll('[class*="border-l-4"]');
+      flashMessages.forEach(msg => {
+        msg.style.transition = 'opacity 0.5s';
+        msg.style.opacity = '0';
+        setTimeout(() => msg.remove(), 500);
+      });
+    }, 5000);
+  </script>
+
+</body>
+</html>

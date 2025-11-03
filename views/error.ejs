@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Thesis Repository System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="w-full max-w-2xl">
+    <!-- Error Card -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+      <!-- Error Icon and Status Code -->
+      <div class="bg-gradient-to-r from-red-500 to-red-600 p-12 text-center">
+        <div class="mb-6">
+          <% if (statusCode === 403) { %>
+            <i class="fas fa-ban text-white text-8xl"></i>
+          <% } else if (statusCode === 404) { %>
+            <i class="fas fa-search text-white text-8xl"></i>
+          <% } else if (statusCode === 500) { %>
+            <i class="fas fa-exclamation-triangle text-white text-8xl"></i>
+          <% } else { %>
+            <i class="fas fa-exclamation-circle text-white text-8xl"></i>
+          <% } %>
+        </div>
+        <h1 class="text-7xl font-bold text-white mb-4"><%= statusCode %></h1>
+        <p class="text-2xl text-red-100 font-semibold">
+          <% if (statusCode === 403) { %>
+            Forbidden
+          <% } else if (statusCode === 404) { %>
+            Page Not Found
+          <% } else if (statusCode === 500) { %>
+            Internal Server Error
+          <% } else { %>
+            Error
+          <% } %>
+        </p>
+      </div>
+
+      <!-- Error Message -->
+      <div class="p-12">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4"><%= message %></h2>
+
+          <% if (typeof description !== 'undefined' && description) { %>
+            <p class="text-gray-600 mb-6"><%= description %></p>
+          <% } %>
+
+          <% if (statusCode === 403) { %>
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6">
+              <div class="flex items-center justify-center">
+                <i class="fas fa-shield-alt text-red-500 text-2xl mr-3"></i>
+                <p class="text-red-700 text-sm">
+                  <strong>Access Denied:</strong> You don't have the necessary permissions to view this page.
+                </p>
+              </div>
+            </div>
+          <% } else if (statusCode === 404) { %>
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
+              <div class="flex items-center justify-center">
+                <i class="fas fa-info-circle text-blue-500 text-2xl mr-3"></i>
+                <p class="text-blue-700 text-sm">
+                  The page you're looking for doesn't exist or has been moved.
+                </p>
+              </div>
+            </div>
+          <% } else if (statusCode === 500) { %>
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-6">
+              <div class="flex items-center justify-center">
+                <i class="fas fa-tools text-yellow-500 text-2xl mr-3"></i>
+                <p class="text-yellow-700 text-sm">
+                  Something went wrong on our end. We're working to fix it.
+                </p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <!-- Show dashboard link if user is authenticated -->
+            <a
+              href="<%= user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard' %>"
+              class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
+            >
+              <i class="fas fa-tachometer-alt mr-2"></i>
+              Go to Dashboard
+            </a>
+          <% } else { %>
+            <!-- Show login link if user is not authenticated -->
+            <a
+              href="/auth/login"
+              class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
+            >
+              <i class="fas fa-sign-in-alt mr-2"></i>
+              Login
+            </a>
+          <% } %>
+
+          <a
+            href="/"
+            class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
+          >
+            <i class="fas fa-home mr-2"></i>
+            Back to Home
+          </a>
+
+          <% if (statusCode === 403 && typeof user !== 'undefined' && user) { %>
+            <a
+              href="javascript:history.back()"
+              class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-200"
+            >
+              <i class="fas fa-arrow-left mr-2"></i>
+              Go Back
+            </a>
+          <% } %>
+        </div>
+
+        <!-- Additional Help -->
+        <div class="mt-8 text-center">
+          <p class="text-sm text-gray-500 mb-2">Need help?</p>
+          <a href="#" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+            <i class="fas fa-envelope mr-1"></i>
+            Contact Support
+          </a>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-gray-50 px-8 py-4 border-t border-gray-200 text-center">
+        <p class="text-xs text-gray-500">
+          &copy; <%= new Date().getFullYear() %> Thesis Repository System. All rights reserved.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Additional Info for Developers -->
+    <% if (process.env.NODE_ENV === 'development') { %>
+      <div class="mt-6 bg-gray-800 text-white rounded-lg p-4 text-xs font-mono">
+        <div class="flex items-center mb-2">
+          <i class="fas fa-code text-yellow-400 mr-2"></i>
+          <strong>Developer Info</strong>
+        </div>
+        <div class="space-y-1 text-gray-300">
+          <p><strong>Status Code:</strong> <%= statusCode %></p>
+          <p><strong>Message:</strong> <%= message %></p>
+          <% if (typeof description !== 'undefined' && description) { %>
+            <p><strong>Description:</strong> <%= description %></p>
+          <% } %>
+          <% if (typeof user !== 'undefined' && user) { %>
+            <p><strong>User Role:</strong> <%= user.role %></p>
+            <p><strong>User ID:</strong> <%= user.id %></p>
+          <% } else { %>
+            <p><strong>User:</strong> Not authenticated</p>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+
+</body>
+</html>

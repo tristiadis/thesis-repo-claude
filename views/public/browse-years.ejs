@@ -1,0 +1,209 @@
+<!-- Browse by Year Page -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Page Header -->
+  <div class="bg-gradient-to-r from-green-600 to-green-800 text-white py-12">
+    <div class="container mx-auto px-4">
+      <!-- Breadcrumb -->
+      <div class="text-sm mb-4">
+        <a href="/" class="hover:text-green-200 transition">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <span class="mx-2">/</span>
+        <span>Browse by Year</span>
+      </div>
+
+      <h1 class="text-4xl font-bold mb-4">Browse by Year</h1>
+      <p class="text-green-100 text-lg">
+        Explore theses organized by graduation year
+      </p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container mx-auto px-4 py-12">
+    <% if (years.length > 0) { %>
+      <!-- View Toggle -->
+      <div class="mb-8 flex justify-center">
+        <div class="inline-flex rounded-lg shadow-md bg-white p-1">
+          <button
+            onclick="toggleView('timeline')"
+            id="timeline-btn"
+            class="px-4 py-2 rounded-lg font-semibold text-sm transition-colors bg-green-600 text-white"
+          >
+            <i class="fas fa-stream mr-2"></i>Timeline View
+          </button>
+          <button
+            onclick="toggleView('grid')"
+            id="grid-btn"
+            class="px-4 py-2 rounded-lg font-semibold text-sm transition-colors text-gray-700 hover:bg-gray-100"
+          >
+            <i class="fas fa-th-large mr-2"></i>Grid View
+          </button>
+        </div>
+      </div>
+
+      <!-- Timeline View -->
+      <div id="timeline-view" class="max-w-4xl mx-auto">
+        <div class="relative">
+          <!-- Vertical Line -->
+          <div class="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-green-200 hidden md:block"></div>
+
+          <% years.forEach((yearObj, index) => { %>
+            <div class="relative mb-8 md:mb-12">
+              <!-- Year Circle on Timeline -->
+              <div class="absolute left-1/2 transform -translate-x-1/2 -translate-y-1 hidden md:flex items-center justify-center w-16 h-16 bg-green-600 rounded-full border-4 border-white shadow-lg z-10">
+                <div class="text-white font-bold text-sm"><%= yearObj.year.toString().slice(-2) %></div>
+              </div>
+
+              <!-- Content Card (alternating sides on desktop) -->
+              <div class="md:flex md:items-center <%= index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse' %>">
+                <!-- Spacer for timeline -->
+                <div class="hidden md:block md:w-1/2"></div>
+
+                <!-- Card -->
+                <div class="md:w-1/2 md:px-8">
+                  <a href="/browse/years/<%= yearObj.year %>" class="block group">
+                    <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all p-6 transform hover:-translate-y-1">
+                      <!-- Year Badge (mobile only) -->
+                      <div class="md:hidden mb-4">
+                        <div class="inline-block bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xl">
+                          <%= yearObj.year %>
+                        </div>
+                      </div>
+
+                      <!-- Year Title (desktop only) -->
+                      <h3 class="hidden md:block text-3xl font-bold text-gray-900 mb-3 group-hover:text-green-600 transition-colors">
+                        <%= yearObj.year %>
+                      </h3>
+
+                      <!-- Statistics -->
+                      <div class="flex items-center gap-4 mb-4">
+                        <div class="flex items-center text-gray-600">
+                          <i class="fas fa-book text-green-600 mr-2"></i>
+                          <span class="font-semibold"><%= yearObj.thesisCount.toLocaleString() %></span>
+                          <span class="ml-1 text-sm"><%= yearObj.thesisCount === 1 ? 'thesis' : 'theses' %></span>
+                        </div>
+                      </div>
+
+                      <!-- Progress Bar -->
+                      <%
+                        const maxTheses = Math.max(...years.map(y => y.thesisCount));
+                        const percentage = (yearObj.thesisCount / maxTheses) * 100;
+                      %>
+                      <div class="mb-4">
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            class="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
+                            style="width: <%= percentage %>%"
+                          ></div>
+                        </div>
+                      </div>
+
+                      <!-- View Button -->
+                      <div class="flex items-center text-green-600 group-hover:text-green-700 font-semibold">
+                        <span>View Theses</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Grid View (hidden by default) -->
+      <div id="grid-view" class="hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <% years.forEach(yearObj => { %>
+            <a href="/browse/years/<%= yearObj.year %>" class="block group">
+              <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all p-6 text-center transform hover:-translate-y-2">
+                <!-- Year -->
+                <div class="text-5xl font-bold text-green-600 mb-3 group-hover:scale-110 transition-transform">
+                  <%= yearObj.year %>
+                </div>
+
+                <!-- Count Badge -->
+                <div class="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-full font-semibold mb-3">
+                  <%= yearObj.thesisCount.toLocaleString() %> <%= yearObj.thesisCount === 1 ? 'thesis' : 'theses' %>
+                </div>
+
+                <!-- Progress Ring Visualization -->
+                <%
+                  const maxThesesGrid = Math.max(...years.map(y => y.thesisCount));
+                  const percentageGrid = (yearObj.thesisCount / maxThesesGrid) * 100;
+                %>
+                <div class="mb-4">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      class="h-2 bg-green-600 rounded-full transition-all"
+                      style="width: <%= percentageGrid %>%"
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- Icon -->
+                <div class="text-green-500 text-3xl">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="mt-12 text-center">
+        <p class="text-gray-600">
+          Showing <span class="font-bold text-gray-900"><%= years.length %></span>
+          <%= years.length === 1 ? 'year' : 'years' %>
+          with published theses
+        </p>
+      </div>
+
+    <% } else { %>
+      <!-- Empty State -->
+      <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <div class="mb-6">
+          <i class="fas fa-calendar-alt text-6xl text-gray-300"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-4">No Years Found</h3>
+        <p class="text-gray-600 mb-8">
+          There are currently no graduation years with published theses.
+        </p>
+        <a
+          href="/"
+          class="inline-block px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+        >
+          <i class="fas fa-home mr-2"></i>Return to Homepage
+        </a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+function toggleView(view) {
+  const timelineView = document.getElementById('timeline-view');
+  const gridView = document.getElementById('grid-view');
+  const timelineBtn = document.getElementById('timeline-btn');
+  const gridBtn = document.getElementById('grid-btn');
+
+  if (view === 'timeline') {
+    timelineView.classList.remove('hidden');
+    gridView.classList.add('hidden');
+    timelineBtn.classList.add('bg-green-600', 'text-white');
+    timelineBtn.classList.remove('text-gray-700', 'hover:bg-gray-100');
+    gridBtn.classList.remove('bg-green-600', 'text-white');
+    gridBtn.classList.add('text-gray-700', 'hover:bg-gray-100');
+  } else {
+    timelineView.classList.add('hidden');
+    gridView.classList.remove('hidden');
+    gridBtn.classList.add('bg-green-600', 'text-white');
+    gridBtn.classList.remove('text-gray-700', 'hover:bg-gray-100');
+    timelineBtn.classList.remove('bg-green-600', 'text-white');
+    timelineBtn.classList.add('text-gray-700', 'hover:bg-gray-100');
+  }
+}
+</script>
