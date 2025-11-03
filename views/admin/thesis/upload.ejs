@@ -1,0 +1,391 @@
+<!-- Admin Thesis Upload Form - Single Page -->
+<div class="max-w-6xl mx-auto py-8 px-4" x-data="adminUploadForm()">
+
+  <form method="POST" action="/admin/thesis/upload" @submit.prevent="submitForm">
+
+    <!-- Basic Information Section -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-4">
+        <i class="fas fa-info-circle mr-2"></i>Basic Information
+      </h2>
+
+      <div class="space-y-4">
+        <!-- Title -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Title (Indonesian) <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="title" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Judul skripsi dalam Bahasa Indonesia">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Title (English)
+            </label>
+            <input type="text" name="titleEn"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Optional">
+          </div>
+        </div>
+
+        <!-- Author Info -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Author Name <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="authorName" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Student ID (NIM) <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="studentId" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Graduation Year <span class="text-red-500">*</span>
+            </label>
+            <input type="number" name="graduationYear" required min="2000" max="2100"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Department and Defense Date -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Department <span class="text-red-500">*</span>
+            </label>
+            <select name="departmentId" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="">Select Department</option>
+              <% departments.forEach(dept => { %>
+                <option value="<%= dept.id %>"><%= dept.name %> - <%= dept.faculty.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Defense Date
+            </label>
+            <input type="date" name="defenseDate"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Abstracts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Abstract (Indonesian) <span class="text-red-500">*</span>
+            </label>
+            <textarea name="abstractId" required rows="6"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Max 500 words"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Abstract (English)
+            </label>
+            <textarea name="abstractEn" rows="6"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Optional"></textarea>
+          </div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Keywords (Indonesian) <span class="text-red-500">*</span>
+            </label>
+            <input type="text" name="keywords" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Comma-separated">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Keywords (English)
+            </label>
+            <input type="text" name="keywordsEn"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Optional">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advisors & Examiners Section -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-4">
+        <i class="fas fa-users mr-2"></i>Advisors & Examiners
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Main Advisor -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Main Advisor <span class="text-red-500">*</span>
+          </label>
+          <select name="advisor1Id" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="">Select Advisor</option>
+            <% lecturers.forEach(lect => { %>
+              <option value="<%= lect.id %>"><%= lect.name %> - <%= lect.department.name %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- Co-Advisor -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Co-Advisor
+          </label>
+          <select name="advisor2Id"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="">None (Optional)</option>
+            <% lecturers.forEach(lect => { %>
+              <option value="<%= lect.id %>"><%= lect.name %> - <%= lect.department.name %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- Examiners -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Examiner 1</label>
+          <select name="examiner1Id"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="">None (Optional)</option>
+            <% lecturers.forEach(lect => { %>
+              <option value="<%= lect.id %>"><%= lect.name %> - <%= lect.department.name %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Examiner 2</label>
+          <select name="examiner2Id"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="">None (Optional)</option>
+            <% lecturers.forEach(lect => { %>
+              <option value="<%= lect.id %>"><%= lect.name %> - <%= lect.department.name %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Examiner 3</label>
+          <select name="examiner3Id"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="">None (Optional)</option>
+            <% lecturers.forEach(lect => { %>
+              <option value="<%= lect.id %>"><%= lect.name %> - <%= lect.department.name %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Upload Section -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-900">
+          <i class="fas fa-file-upload mr-2"></i>Files
+        </h2>
+        <span class="text-sm text-gray-600">
+          Min: <%= minFiles %> | Max: <%= maxFiles %> files
+        </span>
+      </div>
+
+      <!-- File List -->
+      <div class="space-y-4 mb-4">
+        <template x-for="(file, index) in files" :key="index">
+          <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+            <div class="flex items-start justify-between mb-3">
+              <span class="text-sm font-semibold text-gray-700">File #<span x-text="index + 1"></span></span>
+              <button type="button" @click="removeFile(index)"
+                class="text-red-600 hover:text-red-800"
+                :disabled="files.length <= <%= minFiles %>">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- File Upload -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">PDF File *</label>
+                <input type="file" accept="application/pdf"
+                  @change="handleFileSelect($event, index)"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <p class="text-xs text-gray-500 mt-1" x-show="file.uploadedFile">
+                  <i class="fas fa-check-circle text-green-600"></i>
+                  <span x-text="file.uploadedFile?.name"></span>
+                </p>
+              </div>
+
+              <!-- File Label -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">File Label *</label>
+                <input type="text" x-model="file.fileLabel" required list="labelSuggestions"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  placeholder="e.g., Full Text, Cover, Chapter 1">
+                <datalist id="labelSuggestions">
+                  <% fileLabelSuggestions.forEach(suggestion => { %>
+                    <option value="<%= suggestion.value %>"><%= suggestion.label %></option>
+                  <% }); %>
+                </datalist>
+              </div>
+
+              <!-- Access Level -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Access Level *</label>
+                <select x-model="file.accessLevel"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                  <% accessLevelOptions.forEach(option => { %>
+                    <option value="<%= option.value %>"><%= option.label %></option>
+                  <% }); %>
+                </select>
+              </div>
+
+              <!-- Embargo Date (if EMBARGOED) -->
+              <div x-show="file.accessLevel === 'EMBARGOED'">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Embargo Until</label>
+                <input type="date" x-model="file.embargoUntil"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+              </div>
+
+              <!-- Embargo Reason (if EMBARGOED) -->
+              <div class="md:col-span-2" x-show="file.accessLevel === 'EMBARGOED'">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Embargo Reason</label>
+                <input type="text" x-model="file.embargoReason" list="embargoReasonSuggestions"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  placeholder="Optional">
+                <datalist id="embargoReasonSuggestions">
+                  <% embargoReasons.forEach(reason => { %>
+                    <option value="<%= reason %>"></option>
+                  <% }); %>
+                </datalist>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Add File Button -->
+      <button type="button" @click="addFile"
+        :disabled="files.length >= <%= maxFiles %>"
+        :class="files.length >= <%= maxFiles %> ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
+        class="w-full py-3 text-white rounded-lg font-medium transition">
+        <i class="fas fa-plus mr-2"></i>
+        Add File (<span x-text="files.length"></span>/<%= maxFiles %>)
+      </button>
+    </div>
+
+    <!-- Submit Buttons -->
+    <div class="flex justify-end space-x-4">
+      <a href="/admin/review" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
+        Cancel
+      </a>
+      <button type="submit"
+        :disabled="!canSubmit"
+        :class="canSubmit ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'"
+        class="px-6 py-3 text-white rounded-lg font-medium transition">
+        <i class="fas fa-upload mr-2"></i>Upload Thesis
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+function adminUploadForm() {
+  return {
+    files: [
+      {
+        uploadedFile: null,
+        fileLabel: '',
+        accessLevel: 'PUBLIC',
+        embargoUntil: null,
+        embargoReason: null,
+      }
+    ],
+
+    addFile() {
+      if (this.files.length < <%= maxFiles %>) {
+        this.files.push({
+          uploadedFile: null,
+          fileLabel: '',
+          accessLevel: 'PUBLIC',
+          embargoUntil: null,
+          embargoReason: null,
+        });
+      }
+    },
+
+    removeFile(index) {
+      if (this.files.length > <%= minFiles %>) {
+        this.files.splice(index, 1);
+      }
+    },
+
+    handleFileSelect(event, index) {
+      const file = event.target.files[0];
+      if (file) {
+        this.files[index].uploadedFile = file;
+      }
+    },
+
+    get canSubmit() {
+      // Check all files are uploaded
+      const allFilesUploaded = this.files.every(f => f.uploadedFile);
+      // Check all labels are filled
+      const allLabelsEntered = this.files.every(f => f.fileLabel.trim());
+      // Check minimum files
+      const hasMinFiles = this.files.length >= <%= minFiles %>;
+
+      return allFilesUploaded && allLabelsEntered && hasMinFiles;
+    },
+
+    async submitForm(event) {
+      if (!this.canSubmit) {
+        alert('Please upload all files and enter labels');
+        return;
+      }
+
+      // Upload files first via AJAX
+      const formData = new FormData();
+      this.files.forEach((file, index) => {
+        formData.append(`file_${index}`, file.uploadedFile);
+        formData.append(`fileLabel_${index}`, file.fileLabel);
+        formData.append(`accessLevel_${index}`, file.accessLevel);
+        if (file.embargoUntil) formData.append(`embargoUntil_${index}`, file.embargoUntil);
+        if (file.embargoReason) formData.append(`embargoReason_${index}`, file.embargoReason);
+      });
+      formData.append('fileCount', this.files.length);
+
+      try {
+        const response = await fetch('/admin/thesis/upload/files', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          // Files uploaded, now submit the main form
+          event.target.submit();
+        } else {
+          alert('Failed to upload files: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload files. Please try again.');
+      }
+    },
+  };
+}
+</script>
