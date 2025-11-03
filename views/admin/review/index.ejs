@@ -5,17 +5,17 @@
     <div class="mb-8">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Review Queue</h1>
+          <h1 class="text-3xl font-bold text-gray-900"><%= selectedStatus === 'approved' ? 'Approved Theses' : 'Review Queue' %></h1>
           <p class="mt-2 text-sm text-gray-600">
-            Review and approve pending thesis submissions
+            <%= selectedStatus === 'approved' ? 'Manage published status of approved theses' : 'Review and approve pending thesis submissions' %>
           </p>
         </div>
         <div class="flex items-center space-x-4">
           <!-- Stats Card -->
-          <div class="bg-white rounded-lg shadow px-6 py-4 border-l-4 border-blue-500">
-            <div class="text-sm text-gray-600">Pending Review</div>
-            <div class="text-3xl font-bold text-blue-600"><%= stats.total %></div>
-            <% if (stats.today > 0) { %>
+          <div class="bg-white rounded-lg shadow px-6 py-4 border-l-4 <%= selectedStatus === 'approved' ? 'border-green-500' : 'border-blue-500' %>">
+            <div class="text-sm text-gray-600"><%= selectedStatus === 'approved' ? 'Approved Theses' : 'Pending Review' %></div>
+            <div class="text-3xl font-bold <%= selectedStatus === 'approved' ? 'text-green-600' : 'text-blue-600' %>"><%= stats.total %></div>
+            <% if (stats.today > 0 && selectedStatus !== 'approved') { %>
               <div class="text-xs text-gray-500 mt-1"><%= stats.today %> submitted today</div>
             <% } %>
           </div>
@@ -23,9 +23,30 @@
       </div>
     </div>
 
+    <!-- Status Tabs -->
+    <div class="mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+          <a
+            href="/admin/review?status=pending"
+            class="<%= selectedStatus === 'pending' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' %> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+          >
+            <i class="fas fa-clock mr-2"></i>Pending Review
+          </a>
+          <a
+            href="/admin/review?status=approved"
+            class="<%= selectedStatus === 'approved' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' %> whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+          >
+            <i class="fas fa-check-circle mr-2"></i>Approved Theses
+          </a>
+        </nav>
+      </div>
+    </div>
+
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
       <form method="GET" action="/admin/review" class="flex flex-wrap items-center gap-4">
+        <input type="hidden" name="status" value="<%= selectedStatus %>">
         <!-- Department Filter -->
         <div class="flex-1 min-w-[200px]">
           <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
@@ -127,6 +148,11 @@
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Files
                 </th>
+                <% if (selectedStatus === 'approved') { %>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Published
+                </th>
+                <% } %>
                 <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -200,18 +226,69 @@
                     </span>
                   </td>
 
+                  <!-- Published Status (for approved theses) -->
+                  <% if (selectedStatus === 'approved') { %>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <% if (thesis.isPublished) { %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <i class="fas fa-eye mr-1"></i>Published
+                      </span>
+                    <% } else { %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <i class="fas fa-eye-slash mr-1"></i>Not Published
+                      </span>
+                    <% } %>
+                  </td>
+                  <% } %>
+
                   <!-- Actions -->
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a
-                      href="/admin/review/<%= thesis.id %>"
-                      class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                    >
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      Review
-                    </a>
+                    <% if (selectedStatus === 'approved') { %>
+                      <!-- Publish/Unpublish Actions -->
+                      <div class="flex items-center justify-end space-x-2">
+                        <% if (thesis.isPublished) { %>
+                          <form method="POST" action="/admin/thesis/<%= thesis.id %>/unpublish" class="inline">
+                            <button
+                              type="submit"
+                              class="inline-flex items-center px-3 py-2 border border-yellow-600 rounded-lg shadow-sm text-sm font-medium text-yellow-600 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
+                              onclick="return confirm('Are you sure you want to unpublish this thesis?')"
+                            >
+                              <i class="fas fa-eye-slash mr-2"></i>Unpublish
+                            </button>
+                          </form>
+                        <% } else { %>
+                          <form method="POST" action="/admin/thesis/<%= thesis.id %>/publish" class="inline">
+                            <button
+                              type="submit"
+                              class="inline-flex items-center px-3 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                              onclick="return confirm('Are you sure you want to publish this thesis?')"
+                            >
+                              <i class="fas fa-eye mr-2"></i>Publish
+                            </button>
+                          </form>
+                        <% } %>
+                        <a
+                          href="/thesis/<%= thesis.id %>"
+                          target="_blank"
+                          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                          title="View thesis details"
+                        >
+                          <i class="fas fa-external-link-alt"></i>
+                        </a>
+                      </div>
+                    <% } else { %>
+                      <!-- Review Action -->
+                      <a
+                        href="/admin/review/<%= thesis.id %>"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                      >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Review
+                      </a>
+                    <% } %>
                   </td>
                 </tr>
               <% }); %>

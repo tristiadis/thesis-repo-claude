@@ -47,6 +47,16 @@ router.post('/submit', requireAdmin, studentController.submitThesis);
 router.post('/submit/draft', requireAdmin, studentController.saveDraft);
 
 /**
+ * Publish/Unpublish Thesis Routes
+ * Control public visibility of approved theses
+ */
+// Publish thesis (make publicly visible)
+router.post('/thesis/:id/publish', requireAdmin, adminController.publishThesis);
+
+// Unpublish thesis (hide from public view)
+router.post('/thesis/:id/unpublish', requireAdmin, adminController.unpublishThesis);
+
+/**
  * Faculty Routes
  */
 // List all faculties

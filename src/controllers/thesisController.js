@@ -73,8 +73,8 @@ const show = async (req, res, next) => {
       },
     });
 
-    // Check if thesis exists and is approved
-    if (!thesis || thesis.status !== 'APPROVED') {
+    // Check if thesis exists and is approved and published
+    if (!thesis || thesis.status !== 'APPROVED' || !thesis.isPublished) {
       return res.status(404).render('errors/404', {
         title: 'Thesis Not Found',
         layout: 'layouts/main',
@@ -250,8 +250,8 @@ const previewFile = async (req, res, next) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    // Check if thesis is approved
-    if (file.thesis.status !== 'APPROVED') {
+    // Check if thesis is approved and published
+    if (file.thesis.status !== 'APPROVED' || !file.thesis.isPublished) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -341,8 +341,8 @@ const downloadFile = async (req, res, next) => {
       });
     }
 
-    // Check if thesis is approved
-    if (file.thesis.status !== 'APPROVED') {
+    // Check if thesis is approved and published
+    if (file.thesis.status !== 'APPROVED' || !file.thesis.isPublished) {
       return res.status(403).render('error', {
         title: 'Access Denied',
         message: 'Access Denied',

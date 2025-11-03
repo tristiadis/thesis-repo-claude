@@ -38,6 +38,7 @@ const search = async (req, res, next) => {
     // Build where clause
     const whereClause = {
       status: 'APPROVED',
+      isPublished: true,
     };
 
     // Add search query filter
@@ -132,7 +133,7 @@ const search = async (req, res, next) => {
     // Get available years for filter
     const years = await prisma.thesis.groupBy({
       by: ['graduationYear'],
-      where: { status: 'APPROVED' },
+      where: { status: 'APPROVED', isPublished: true },
       _count: {
         id: true,
       },

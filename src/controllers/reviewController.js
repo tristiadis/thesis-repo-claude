@@ -15,11 +15,11 @@ const { getFileMetadata } = require('../utils/fileHandler');
  */
 const index = async (req, res, next) => {
   try {
-    const { department, sort } = req.query;
+    const { department, sort, status: statusFilter } = req.query;
 
     // Build query conditions
     const where = {
-      status: 'PENDING',
+      status: statusFilter === 'approved' ? 'APPROVED' : 'PENDING',
     };
 
     if (department && department !== 'all') {
@@ -121,12 +121,13 @@ const index = async (req, res, next) => {
     };
 
     res.renderWithLayout('admin/review/index', {
-      title: 'Review Queue',
+      title: statusFilter === 'approved' ? 'Approved Theses' : 'Review Queue',
       theses,
       departments,
       stats,
       selectedDepartment: department || 'all',
       selectedSort: sort || 'oldest',
+      selectedStatus: statusFilter || 'pending',
       user: req.user,
     });
   } catch (error) {
@@ -480,11 +481,12 @@ const approve = async (req, res, next) => {
         throw new Error('Only pending theses can be approved');
       }
 
-      // Update thesis status to APPROVED
+      // Update thesis status to APPROVED (but not published yet)
       const updatedThesis = await tx.thesis.update({
         where: { id: parseInt(id) },
         data: {
           status: 'APPROVED',
+          isPublished: false, // Requires manual publish action
           publishedAt: new Date(),
           reviewedBy: adminId,
           reviewedAt: new Date(),
@@ -497,7 +499,7 @@ const approve = async (req, res, next) => {
 
     console.log(`Thesis approved: ${result.id} by admin ${req.user.username}`);
 
-    req.flash('success', 'Thesis approved and published successfully!');
+    req.flash('success', 'Thesis approved successfully! You can now publish it to make it publicly visible.');
     res.redirect('/admin/review');
   } catch (error) {
     console.error('Error approving thesis:', error);

@@ -15,7 +15,7 @@ const browseFaculties = async (req, res, next) => {
             _count: {
               select: {
                 theses: {
-                  where: { status: 'APPROVED' },
+                  where: { status: 'APPROVED', isPublished: true },
                 },
               },
             },
@@ -69,7 +69,7 @@ const facultyDetail = async (req, res, next) => {
             _count: {
               select: {
                 theses: {
-                  where: { status: 'APPROVED' },
+                  where: { status: 'APPROVED', isPublished: true },
                 },
               },
             },
@@ -157,6 +157,7 @@ const departmentDetail = async (req, res, next) => {
     const whereClause = {
       departmentId,
       status: 'APPROVED',
+      isPublished: true,
     };
 
     // Add year filter
@@ -209,6 +210,7 @@ const departmentDetail = async (req, res, next) => {
       where: {
         departmentId,
         status: 'APPROVED',
+        isPublished: true,
       },
       _count: {
         id: true,
@@ -269,7 +271,7 @@ const browseYears = async (req, res, next) => {
     // Get years with thesis counts
     const years = await prisma.thesis.groupBy({
       by: ['graduationYear'],
-      where: { status: 'APPROVED' },
+      where: { status: 'APPROVED', isPublished: true },
       _count: {
         id: true,
       },
@@ -315,6 +317,7 @@ const yearDetail = async (req, res, next) => {
     // Build where clause
     const whereClause = {
       status: 'APPROVED',
+      isPublished: true,
       graduationYear: year,
     };
 
@@ -389,6 +392,7 @@ const yearDetail = async (req, res, next) => {
       by: ['departmentId'],
       where: {
         status: 'APPROVED',
+        isPublished: true,
         graduationYear: year,
       },
       _count: {

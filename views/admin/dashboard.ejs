@@ -3,10 +3,19 @@
 
   <!-- Welcome Header -->
   <div class="bg-gradient-to-r from-admin-800 to-admin-900 rounded-xl shadow-lg p-6 text-white">
-    <h1 class="text-3xl font-bold mb-2">
-      <i class="fas fa-user-shield mr-2"></i>Welcome, <%= user.name %>!
-    </h1>
-    <p class="text-gray-300">Manage your thesis repository system from this dashboard</p>
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">
+          <i class="fas fa-user-shield mr-2"></i>Welcome, <%= user.name %>!
+        </h1>
+        <p class="text-gray-300">Manage your thesis repository system from this dashboard</p>
+      </div>
+      <div>
+        <a href="/admin/submit" class="inline-flex items-center px-6 py-3 bg-white text-admin-800 font-semibold rounded-lg shadow-lg hover:bg-gray-100 transition-all hover:scale-105">
+          <i class="fas fa-upload mr-2"></i>Upload Thesis
+        </a>
+      </div>
+    </div>
   </div>
 
   <!-- Main Statistics Cards (2x2 Grid) -->

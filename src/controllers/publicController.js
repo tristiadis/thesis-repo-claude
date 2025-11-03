@@ -14,7 +14,7 @@ const index = async (req, res, next) => {
   try {
     // Get statistics
     const totalTheses = await prisma.thesis.count({
-      where: { status: 'APPROVED' },
+      where: { status: 'APPROVED', isPublished: true },
     });
 
     const totalDownloads = await prisma.thesisFile.aggregate({
@@ -32,7 +32,7 @@ const index = async (req, res, next) => {
         departments: {
           include: {
             theses: {
-              where: { status: 'APPROVED' },
+              where: { status: 'APPROVED', isPublished: true },
               select: { id: true },
             },
           },
@@ -53,7 +53,7 @@ const index = async (req, res, next) => {
 
     // Get recent theses (last 6 published)
     const recentTheses = await prisma.thesis.findMany({
-      where: { status: 'APPROVED' },
+      where: { status: 'APPROVED', isPublished: true },
       orderBy: { publishedAt: 'desc' },
       take: 6,
       include: {
@@ -72,7 +72,7 @@ const index = async (req, res, next) => {
 
     // Get most viewed theses (top 6)
     const mostViewedTheses = await prisma.thesis.findMany({
-      where: { status: 'APPROVED' },
+      where: { status: 'APPROVED', isPublished: true },
       orderBy: { viewCount: 'desc' },
       take: 6,
       include: {
@@ -92,7 +92,7 @@ const index = async (req, res, next) => {
     // Get graduation years for browse by year
     const graduationYears = await prisma.thesis.groupBy({
       by: ['graduationYear'],
-      where: { status: 'APPROVED' },
+      where: { status: 'APPROVED', isPublished: true },
       _count: {
         id: true,
       },

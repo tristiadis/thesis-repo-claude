@@ -352,8 +352,102 @@ const exportStatistics = async (req, res, next) => {
   }
 };
 
+/**
+ * Publish Thesis
+ * Make an approved thesis publicly visible
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ */
+const publishThesis = async (req, res, next) => {
+  try {
+    const thesisId = parseInt(req.params.id);
+
+    // Get thesis to check if it's approved
+    const thesis = await prisma.thesis.findUnique({
+      where: { id: thesisId },
+      select: { id: true, status: true, isPublished: true, title: true },
+    });
+
+    if (!thesis) {
+      req.flash('error', 'Thesis not found');
+      return res.redirect('/admin/review');
+    }
+
+    if (thesis.status !== 'APPROVED') {
+      req.flash('error', 'Only approved theses can be published');
+      return res.redirect('/admin/review');
+    }
+
+    if (thesis.isPublished) {
+      req.flash('info', 'Thesis is already published');
+      return res.redirect('/admin/review');
+    }
+
+    // Publish thesis
+    await prisma.thesis.update({
+      where: { id: thesisId },
+      data: {
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+    });
+
+    req.flash('success', `Thesis "${thesis.title}" has been published successfully!`);
+    res.redirect('/admin/review');
+  } catch (error) {
+    console.error('Error publishing thesis:', error);
+    req.flash('error', 'Failed to publish thesis');
+    next(error);
+  }
+};
+
+/**
+ * Unpublish Thesis
+ * Hide an approved thesis from public view
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ */
+const unpublishThesis = async (req, res, next) => {
+  try {
+    const thesisId = parseInt(req.params.id);
+
+    // Get thesis to check status
+    const thesis = await prisma.thesis.findUnique({
+      where: { id: thesisId },
+      select: { id: true, status: true, isPublished: true, title: true },
+    });
+
+    if (!thesis) {
+      req.flash('error', 'Thesis not found');
+      return res.redirect('/admin/review');
+    }
+
+    if (!thesis.isPublished) {
+      req.flash('info', 'Thesis is already unpublished');
+      return res.redirect('/admin/review');
+    }
+
+    // Unpublish thesis
+    await prisma.thesis.update({
+      where: { id: thesisId },
+      data: {
+        isPublished: false,
+      },
+    });
+
+    req.flash('success', `Thesis "${thesis.title}" has been unpublished`);
+    res.redirect('/admin/review');
+  } catch (error) {
+    console.error('Error unpublishing thesis:', error);
+    req.flash('error', 'Failed to unpublish thesis');
+    next(error);
+  }
+};
+
 module.exports = {
   dashboard,
   statistics,
   exportStatistics,
+  publishThesis,
+  unpublishThesis,
 };
