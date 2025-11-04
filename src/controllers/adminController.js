@@ -444,10 +444,72 @@ const unpublishThesis = async (req, res, next) => {
   }
 };
 
+/**
+ * Export Thesis Data to CSV
+ * Export thesis data with filters
+ */
+const exportThesisCSV = async (req, res, next) => {
+  try {
+    const thesisExportService = require('../services/thesisExportService');
+
+    // Extract filters from query params
+    const filters = {
+      status: req.query.status,
+      department: req.query.department,
+      year: req.query.year,
+      researchMethod: req.query.researchMethod,
+      published: req.query.published,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+    };
+
+    // Extract export options
+    const options = {
+      includeAbstract: req.query.includeAbstract === 'true',
+      includeFiles: req.query.includeFiles === 'true',
+      includeStats: req.query.includeStats !== 'false', // Default true
+    };
+
+    // Generate CSV
+    const csv = await thesisExportService.exportToCSV(filters, options);
+
+    // Generate filename with timestamp and filters
+    const timestamp = new Date().toISOString().split('T')[0];
+    let filename = `thesis-export-${timestamp}`;
+
+    if (filters.status && filters.status !== 'all') {
+      filename += `-${filters.status}`;
+    }
+    if (filters.department && filters.department !== 'all') {
+      filename += `-dept${filters.department}`;
+    }
+    if (filters.year && filters.year !== 'all') {
+      filename += `-${filters.year}`;
+    }
+
+    filename += '.csv';
+
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // Send BOM for UTF-8 Excel compatibility
+    res.write('\uFEFF');
+
+    // Send CSV
+    res.send(csv);
+  } catch (error) {
+    console.error('Error exporting thesis CSV:', error);
+    req.flash('error', 'Failed to export thesis data');
+    res.redirect('/admin/review');
+  }
+};
+
 module.exports = {
   dashboard,
   statistics,
   exportStatistics,
   publishThesis,
   unpublishThesis,
+  exportThesisCSV,
 };

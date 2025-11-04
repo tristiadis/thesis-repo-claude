@@ -54,6 +54,12 @@ router.get('/statistics', requireAdmin, adminController.statistics);
 router.get('/statistics/export', requireAdmin, adminController.exportStatistics);
 
 /**
+ * GET /admin/thesis/export
+ * Export thesis data to CSV with filters
+ */
+router.get('/thesis/export', requireAdmin, adminController.exportThesisCSV);
+
+/**
  * Review Routes
  * Mount review routes under /admin/review
  */
