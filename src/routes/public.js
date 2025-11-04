@@ -17,6 +17,9 @@ router.get('/', publicController.index);
 // GET /search - Search theses
 router.get('/search', searchController.search);
 
+// GET /search/advanced - Advanced search
+router.get('/search/advanced', searchController.advancedSearch);
+
 // Browse routes
 // GET /browse/faculties - Browse all faculties
 router.get('/browse/faculties', browseController.browseFaculties);
@@ -32,6 +35,12 @@ router.get('/browse/years', browseController.browseYears);
 
 // GET /browse/years/:year - Year detail with theses
 router.get('/browse/years/:year', browseController.yearDetail);
+
+// GET /browse/research-methods - Browse all research methods
+router.get('/browse/research-methods', browseController.browseResearchMethods);
+
+// GET /browse/research-methods/:method - Research method detail with theses
+router.get('/browse/research-methods/:method', browseController.researchMethodDetail);
 
 // Thesis detail routes
 // GET /thesis/:id/export/ris - Export thesis citation in RIS format

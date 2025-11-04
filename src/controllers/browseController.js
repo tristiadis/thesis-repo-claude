@@ -448,10 +448,231 @@ const yearDetail = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /browse/research-methods - Browse all research methods
+ */
+const browseResearchMethods = async (req, res, next) => {
+  try {
+    // Get research methods with thesis counts
+    const methods = await prisma.thesis.groupBy({
+      by: ['researchMethod'],
+      where: { status: 'APPROVED', isPublished: true },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        _count: {
+          id: 'desc',
+        },
+      },
+    });
+
+    // Format methods with counts and labels
+    const methodLabels = {
+      QUALITATIVE: 'Kualitatif (Qualitative)',
+      QUANTITATIVE: 'Kuantitatif (Quantitative)',
+      MIXED_METHOD: 'Mix-method (Mixed Method)',
+      OTHER: 'Lainnya (Other)',
+    };
+
+    const methodsWithStats = methods.map(method => ({
+      value: method.researchMethod,
+      label: methodLabels[method.researchMethod] || method.researchMethod,
+      thesisCount: method._count.id,
+    }));
+
+    res.render('public/browse-research-methods', {
+      title: 'Browse by Research Method',
+      layout: 'layouts/main',
+      methods: methodsWithStats,
+      user: req.user || null,
+    });
+  } catch (error) {
+    console.error('Error loading research methods:', error);
+    next(error);
+  }
+};
+
+/**
+ * GET /browse/research-methods/:method - Research method detail with theses
+ */
+const researchMethodDetail = async (req, res, next) => {
+  try {
+    const method = req.params.method.toUpperCase();
+    const {
+      faculty: facultyId,
+      department: departmentId,
+      year: graduationYear,
+      sort = 'newest',
+      page = 1,
+    } = req.query;
+
+    const limit = 20;
+    const offset = (parseInt(page) - 1) * limit;
+
+    // Validate research method
+    const validMethods = ['QUALITATIVE', 'QUANTITATIVE', 'MIXED_METHOD', 'OTHER'];
+    if (!validMethods.includes(method)) {
+      return res.status(404).render('errors/404', {
+        title: 'Research Method Not Found',
+        layout: 'layouts/main',
+        message: 'Invalid research method.',
+        user: req.user || null,
+      });
+    }
+
+    // Build where clause
+    const whereClause = {
+      status: 'APPROVED',
+      isPublished: true,
+      researchMethod: method,
+    };
+
+    // Add faculty filter (via department)
+    if (facultyId) {
+      whereClause.department = {
+        facultyId: parseInt(facultyId),
+      };
+    }
+
+    // Add department filter
+    if (departmentId) {
+      whereClause.departmentId = parseInt(departmentId);
+    }
+
+    // Add year filter
+    if (graduationYear) {
+      whereClause.graduationYear = parseInt(graduationYear);
+    }
+
+    // Determine sort order
+    let orderBy = {};
+    switch (sort) {
+      case 'oldest':
+        orderBy = { publishedAt: 'asc' };
+        break;
+      case 'title':
+        orderBy = { title: 'asc' };
+        break;
+      case 'popular':
+        orderBy = { viewCount: 'desc' };
+        break;
+      case 'newest':
+      default:
+        orderBy = { publishedAt: 'desc' };
+    }
+
+    // Get total count
+    const totalCount = await prisma.thesis.count({
+      where: whereClause,
+    });
+
+    // Get theses
+    const theses = await prisma.thesis.findMany({
+      where: whereClause,
+      orderBy,
+      take: limit,
+      skip: offset,
+      include: {
+        department: {
+          include: {
+            faculty: true,
+          },
+        },
+        submitter: {
+          select: {
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            files: true,
+          },
+        },
+      },
+    });
+
+    // Get all faculties for filter
+    const faculties = await prisma.faculty.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        departments: {
+          orderBy: { name: 'asc' },
+        },
+      },
+    });
+
+    // Get available years for filter
+    const years = await prisma.thesis.groupBy({
+      by: ['graduationYear'],
+      where: {
+        status: 'APPROVED',
+        isPublished: true,
+        researchMethod: method,
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        graduationYear: 'desc',
+      },
+    });
+
+    const availableYears = years.map(y => ({
+      year: y.graduationYear,
+      count: y._count.id,
+    }));
+
+    // Method labels
+    const methodLabels = {
+      QUALITATIVE: 'Kualitatif (Qualitative)',
+      QUANTITATIVE: 'Kuantitatif (Quantitative)',
+      MIXED_METHOD: 'Mix-method (Mixed Method)',
+      OTHER: 'Lainnya (Other)',
+    };
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limit);
+    const currentPage = parseInt(page);
+    const hasNextPage = currentPage < totalPages;
+    const hasPrevPage = currentPage > 1;
+
+    res.render('public/research-method-detail', {
+      title: `${methodLabels[method]} - Browse Theses`,
+      layout: 'layouts/main',
+      method: {
+        value: method,
+        label: methodLabels[method],
+      },
+      theses,
+      totalCount,
+      currentPage,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      limit,
+      filters: {
+        facultyId: facultyId ? parseInt(facultyId) : null,
+        departmentId: departmentId ? parseInt(departmentId) : null,
+        graduationYear: graduationYear ? parseInt(graduationYear) : null,
+        sort,
+      },
+      faculties,
+      availableYears,
+      user: req.user || null,
+    });
+  } catch (error) {
+    console.error('Error loading research method detail:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   browseFaculties,
   facultyDetail,
   departmentDetail,
   browseYears,
   yearDetail,
+  browseResearchMethods,
+  researchMethodDetail,
 };
