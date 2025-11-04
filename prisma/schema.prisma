@@ -45,6 +45,13 @@ enum AccessLevel {
   RESTRICTED  // Permanently restricted
 }
 
+enum ResearchMethod {
+  QUALITATIVE   // Kualitatif
+  QUANTITATIVE  // Kuantitatif
+  MIXED_METHOD  // Mix-method
+  OTHER         // Lainnya
+}
+
 enum EventType {
   VIEW            // Thesis page view
   DOWNLOAD        // File download
@@ -180,16 +187,17 @@ model Thesis {
   reviewerNotes  String?       @db.Text
 
   // Thesis Metadata
-  title          String        @db.VarChar(500)
-  titleEn        String?       @db.VarChar(500)
-  authorName     String        // Student's full name
-  studentId      String        @db.VarChar(50) // NIM/Student ID
+  title          String         @db.VarChar(500)
+  titleEn        String?        @db.VarChar(500)
+  authorName     String         // Student's full name
+  studentId      String         @db.VarChar(50) // NIM/Student ID
   graduationYear Int
-  defenseDate    DateTime?     // Tanggal sidang
-  abstractId     String        @db.Text
-  abstractEn     String?       @db.Text
-  keywords       String        @db.VarChar(500) // Comma-separated
-  keywordsEn     String?       @db.VarChar(500) // Comma-separated
+  defenseDate    DateTime?      // Tanggal sidang
+  abstractId     String         @db.Text
+  abstractEn     String?        @db.Text
+  keywords       String         @db.VarChar(500) // Comma-separated
+  keywordsEn     String?        @db.VarChar(500) // Comma-separated
+  researchMethod ResearchMethod // Research methodology
 
   // Advisors and Examiners
   advisor1Id     Int

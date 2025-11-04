@@ -120,6 +120,7 @@ const storeThesis = async (req, res, next) => {
           abstractEn: data.abstractEn || null,
           keywords: data.keywords,
           keywordsEn: data.keywordsEn || null,
+          researchMethod: data.researchMethod,
 
           // Advisors and examiners
           advisor1Id: parseInt(data.advisor1Id),
@@ -340,6 +341,7 @@ const updateThesis = async (req, res, next) => {
       abstractEn: data.abstractEn || null,
       keywords: data.keywords,
       keywordsEn: data.keywordsEn || null,
+      researchMethod: data.researchMethod,
       advisor1Id: parseInt(data.advisor1Id),
       advisor2Id: data.advisor2Id ? parseInt(data.advisor2Id) : null,
       examiner1Id: data.examiner1Id ? parseInt(data.examiner1Id) : null,
