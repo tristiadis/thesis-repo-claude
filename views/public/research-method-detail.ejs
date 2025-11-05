@@ -1,0 +1,166 @@
+<!-- Research Method Detail Page -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Page Header -->
+  <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white py-12">
+    <div class="container mx-auto px-4">
+      <!-- Breadcrumb -->
+      <div class="text-sm mb-4">
+        <a href="/" class="hover:text-purple-200 transition">
+          <i class="fas fa-home mr-1"></i>Home
+        </a>
+        <span class="mx-2">/</span>
+        <a href="/browse/research-methods" class="hover:text-purple-200 transition">
+          Browse by Research Method
+        </a>
+        <span class="mx-2">/</span>
+        <span><%= method.label %></span>
+      </div>
+
+      <h1 class="text-4xl font-bold mb-4"><%= method.label %></h1>
+      <p class="text-purple-100 text-lg">
+        <%= totalCount.toLocaleString() %> <%= totalCount === 1 ? 'thesis' : 'theses' %> found
+      </p>
+    </div>
+  </div>
+
+  <!-- Filters & Results -->
+  <div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Sidebar Filters -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm p-6 sticky top-8">
+          <h3 class="text-lg font-bold text-gray-900 mb-4">
+            <i class="fas fa-filter mr-2 text-purple-600"></i>Filters
+          </h3>
+
+          <form method="GET" action="/browse/research-methods/<%= method.value.toLowerCase() %>">
+            <!-- Faculty Filter -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Faculty</label>
+              <select name="faculty" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                <option value="">All Faculties</option>
+                <% faculties.forEach(faculty => { %>
+                  <option value="<%= faculty.id %>" <%= filters.facultyId === faculty.id ? 'selected' : '' %>>
+                    <%= faculty.name %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+
+            <!-- Year Filter -->
+            <% if (availableYears.length > 0) { %>
+              <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Graduation Year</label>
+                <select name="year" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                  <option value="">All Years</option>
+                  <% availableYears.forEach(yearObj => { %>
+                    <option value="<%= yearObj.year %>" <%= filters.graduationYear === yearObj.year ? 'selected' : '' %>>
+                      <%= yearObj.year %> (<%= yearObj.count %>)
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+            <% } %>
+
+            <!-- Sort -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
+              <select name="sort" onchange="this.form.submit()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                <option value="title" <%= filters.sort === 'title' ? 'selected' : '' %>>Title (A-Z)</option>
+                <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+              </select>
+            </div>
+
+            <!-- Reset Button -->
+            <a href="/browse/research-methods/<%= method.value.toLowerCase() %>" class="block w-full text-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              <i class="fas fa-redo mr-2"></i>Reset Filters
+            </a>
+          </form>
+        </div>
+      </div>
+
+      <!-- Results List -->
+      <div class="lg:col-span-3">
+        <% if (theses.length > 0) { %>
+          <div class="space-y-6">
+            <% theses.forEach(thesis => { %>
+              <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+                <!-- Title -->
+                <a href="/thesis/<%= thesis.id %>" class="block group mb-3">
+                  <h3 class="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+                    <%= thesis.title %>
+                  </h3>
+                </a>
+
+                <!-- Metadata -->
+                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
+                  <div class="flex items-center">
+                    <i class="fas fa-user mr-2 text-purple-600"></i>
+                    <%= thesis.authorName %>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-building mr-2 text-purple-600"></i>
+                    <%= thesis.department.name %>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-calendar mr-2 text-purple-600"></i>
+                    <%= thesis.graduationYear %>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-file-pdf mr-2 text-purple-600"></i>
+                    <%= thesis._count.files %> <%= thesis._count.files === 1 ? 'file' : 'files' %>
+                  </div>
+                </div>
+
+                <!-- Keywords -->
+                <% if (thesis.keywords) { %>
+                  <div class="flex flex-wrap gap-2">
+                    <% thesis.keywords.split(',').slice(0, 5).forEach(keyword => { %>
+                      <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                        <%= keyword.trim() %>
+                      </span>
+                    <% }); %>
+                  </div>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+
+          <!-- Pagination -->
+          <% if (totalPages > 1) { %>
+            <div class="mt-8 flex justify-center">
+              <nav class="inline-flex rounded-lg shadow-sm">
+                <% if (hasPrevPage) { %>
+                  <a href="?<%= new URLSearchParams({...filters, page: currentPage - 1}).toString() %>" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                <% } %>
+
+                <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                  <a href="?<%= new URLSearchParams({...filters, page: i}).toString() %>" class="px-4 py-2 text-sm font-medium <%= i === currentPage ? 'bg-purple-600 text-white' : 'text-gray-700 bg-white hover:bg-gray-50' %> border-t border-b border-gray-300">
+                    <%= i %>
+                  </a>
+                <% } %>
+
+                <% if (hasNextPage) { %>
+                  <a href="?<%= new URLSearchParams({...filters, page: currentPage + 1}).toString() %>" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                <% } %>
+              </nav>
+            </div>
+          <% } %>
+        <% } else { %>
+          <!-- Empty State -->
+          <div class="bg-white rounded-lg shadow-sm p-12 text-center">
+            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+            <p class="text-xl text-gray-500 mb-2">No theses found</p>
+            <p class="text-gray-400">Try adjusting your filters</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
